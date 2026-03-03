@@ -26,7 +26,7 @@ class ImageViewerApp extends StatelessWidget {
       ),
       // debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: ViewPage(filePath: filePath)
+        body: ViewPageWrapper(filePath: filePath)
       )
     );
   }
