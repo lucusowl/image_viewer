@@ -10,14 +10,31 @@ class ViewPage extends StatefulWidget {
 }
 
 class _ViewPageState extends State<ViewPage> {
+  final double _maxScale = 10.0;
+  final double _minScale = 1.0;
   late File? _currentFile;
   final TransformationController _transformController = TransformationController();
 
-  void _resetZoom() {
+  void _zoomReset() {
     _transformController.value = Matrix4.identity();
   }
 
-  @override void initState() {
+  /// 2배 확대
+  void _zoomIn() {
+    if (_transformController.value.getMaxScaleOnAxis() * 2.0 <= _maxScale) {
+      _transformController.value = _transformController.value * Matrix4.diagonal3Values(2.0, 2.0, 1.0);
+    }
+  }
+
+  /// 2배 축소
+  void _zoomOut() {
+    if (_transformController.value.getMaxScaleOnAxis() * 0.5 >= _minScale) {
+      _transformController.value = _transformController.value * Matrix4.diagonal3Values(0.5, 0.5, 1.0);
+    }
+  }
+
+  @override
+  void initState() {
     super.initState();
     if (widget.filePath == null) {
       _currentFile = null;
@@ -27,9 +44,16 @@ class _ViewPageState extends State<ViewPage> {
   }
 
   @override
+  void dispose() {
+    _transformController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // 이미지 메인 화면
         Center(
           child: (_currentFile == null)
           ? Icon(Icons.cancel)
@@ -37,40 +61,36 @@ class _ViewPageState extends State<ViewPage> {
             transformationController: _transformController,
             clipBehavior: .none,
             trackpadScrollCausesScale: true,
-            // boundaryMargin: .all(64),
             // constrained: false,
-            minScale: 1.0,
-            maxScale: 10.0,
+            minScale: _minScale,
+            maxScale: _maxScale,
             child: Image(
               image: FileImage(_currentFile!),
               loadingBuilder:(context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return const CircularProgressIndicator();
               },
+              // errorBuilder: (context, error, stackTrace) => const Placeholder(),
             ),
           ),
         ),
 
-        // 파일 이름 영역
-        Positioned(
-          child: Container(
-            padding: const .all(8.0),
-            child: (_currentFile == null)
-              ? Text("NOT FOUND")
-              : Text(_currentFile!.path.split(Platform.pathSeparator).last)
-          ),
-        ),
-
-        // 이미지 행동 나열
+        // 이미지 상세 패널
         if (_currentFile != null)
           Align(
-            alignment: .centerRight,
+            alignment: .bottomCenter,
             child: Container(
-              padding: const .symmetric(horizontal: 20),
-              child: Column(
+              padding: const .symmetric(vertical: 20),
+              child: Row(
                 mainAxisAlignment: .center,
                 children: [
-                  IconButton(onPressed: _resetZoom, icon: Icon(Icons.refresh)),
+                  Padding(
+                    padding: const .all(8.0),
+                    child: Text(_currentFile!.path.split(Platform.pathSeparator).last),
+                  ),
+                  IconButton(onPressed: _zoomReset, icon: Icon(Icons.refresh)),
+                  IconButton(onPressed: _zoomIn, icon: Icon(Icons.zoom_in)),
+                  IconButton(onPressed: _zoomOut, icon: Icon(Icons.zoom_out)),
                 ],
               ),
             )
