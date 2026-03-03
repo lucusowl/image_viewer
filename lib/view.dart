@@ -48,6 +48,7 @@ class _ViewPageState extends State<ViewPage> {
   final double _minScale = 1.0;
   final TransformationController _transformController = TransformationController();
 
+  /// 화면 초기화
   void _zoomReset() {
     _transformController.value = Matrix4.identity();
   }
@@ -77,6 +78,7 @@ class _ViewPageState extends State<ViewPage> {
     return ListenableBuilder(
       listenable: FileModelProvider.of(context),
       builder: (context, child) {
+        _zoomReset(); // 새로 열때 화면 상태 초기화
         final fileModel = FileModelProvider.of(context);
         return Stack(
           children: [
@@ -88,6 +90,7 @@ class _ViewPageState extends State<ViewPage> {
                 transformationController: _transformController,
                 clipBehavior: .none,
                 trackpadScrollCausesScale: true,
+                // boundaryMargin: EdgeInsets.all(double.infinity),
                 // constrained: false,
                 minScale: _minScale,
                 maxScale: _maxScale,
@@ -110,7 +113,8 @@ class _ViewPageState extends State<ViewPage> {
               Align(
                 alignment: .bottomCenter,
                 child: Container(
-                  padding: const .symmetric(vertical: 20),
+                  padding: const .symmetric(vertical: 16),
+                  decoration: BoxDecoration(color: Colors.black54),
                   child: Row(
                     mainAxisAlignment: .center,
                     children: [
@@ -118,9 +122,10 @@ class _ViewPageState extends State<ViewPage> {
                         padding: const .all(8.0),
                         child: Text(fileModel.file!.path.split(Platform.pathSeparator).last),
                       ),
-                      IconButton(onPressed: _zoomReset, icon: Icon(Icons.refresh)),
-                      IconButton(onPressed: _zoomIn, icon: Icon(Icons.zoom_in)),
-                      IconButton(onPressed: _zoomOut, icon: Icon(Icons.zoom_out)),
+                      IconButton(onPressed: _zoomReset, icon: Icon(Icons.fit_screen), tooltip: "화면 초기화",),
+                      IconButton(onPressed: _zoomIn, icon: Icon(Icons.zoom_in), tooltip: "2배 확대"),
+                      IconButton(onPressed: _zoomOut, icon: Icon(Icons.zoom_out), tooltip: "2배 축소"),
+                      IconButton(onPressed: fileModel.pickFile, icon: Icon(Icons.file_open), tooltip: "새 파일 열기"),
                     ],
                   ),
                 )
