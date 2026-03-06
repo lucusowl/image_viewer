@@ -47,6 +47,7 @@ class _ViewPageState extends State<ViewPage> {
   final double _maxScale = 10.0;
   final double _minScale = 1.0;
   final TransformationController _transformController = TransformationController();
+  final GlobalKey _viewerKey = GlobalKey();
 
   /// 화면 초기화
   void _zoomReset() {
@@ -55,15 +56,45 @@ class _ViewPageState extends State<ViewPage> {
 
   /// 2배 확대
   void _zoomIn() {
+    if (!mounted) return;
     if (_transformController.value.getMaxScaleOnAxis() * 2.0 <= _maxScale) {
-      _transformController.value = _transformController.value * Matrix4.diagonal3Values(2.0, 2.0, 1.0);
+      final Matrix4 currentMatrix = _transformController.value;
+
+      final Size viewerSize = _viewerKey.currentContext!.size!;
+      final Offset viewportCenter = Offset(viewerSize.width / 2, viewerSize.height / 2);
+      final Matrix4 invertedMatrix = Matrix4.inverted(currentMatrix);
+      final sceneCenter = invertedMatrix.applyToVector3Array([
+        viewportCenter.dx, viewportCenter.dy, 0
+      ]);
+
+      final Matrix4 newMatrix = currentMatrix.clone()
+        ..translateByDouble(sceneCenter[0], sceneCenter[1], 0.0, 1.0)
+        ..scaleByDouble(2.0, 2.0, 1.0, 1.0)
+        ..translateByDouble(-sceneCenter[0], -sceneCenter[1], 0.0, 1.0);
+
+      _transformController.value = newMatrix;
     }
   }
 
   /// 2배 축소
   void _zoomOut() {
+    if (!mounted) return;
     if (_transformController.value.getMaxScaleOnAxis() * 0.5 >= _minScale) {
-      _transformController.value = _transformController.value * Matrix4.diagonal3Values(0.5, 0.5, 1.0);
+      final Matrix4 currentMatrix = _transformController.value;
+
+      final Size viewerSize = _viewerKey.currentContext!.size!;
+      final Offset viewportCenter = Offset(viewerSize.width / 2, viewerSize.height / 2);
+      final Matrix4 invertedMatrix = Matrix4.inverted(currentMatrix);
+      final sceneCenter = invertedMatrix.applyToVector3Array([
+        viewportCenter.dx, viewportCenter.dy, 0
+      ]);
+
+      final Matrix4 newMatrix = currentMatrix.clone()
+        ..translateByDouble(sceneCenter[0], sceneCenter[1], 0.0, 1.0)
+        ..scaleByDouble(0.5, 0.5, 1.0, 1.0)
+        ..translateByDouble(-sceneCenter[0], -sceneCenter[1], 0.0, 1.0);
+
+      _transformController.value = newMatrix;
     }
   }
 
@@ -87,9 +118,10 @@ class _ViewPageState extends State<ViewPage> {
               child: (fileModel.file == null)
               ? ErrorTile(errorCode: fileModel.errorCode ?? ErrorCode.unknown)
               : InteractiveViewer(
+                key: _viewerKey,
                 transformationController: _transformController,
-                clipBehavior: .none,
-                trackpadScrollCausesScale: true,
+                clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
+                trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
                 // boundaryMargin: EdgeInsets.all(double.infinity),
                 // constrained: false,
                 minScale: _minScale,
