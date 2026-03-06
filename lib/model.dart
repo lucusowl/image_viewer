@@ -22,6 +22,7 @@ class FileModel with ChangeNotifier {
 
   void updateFile(String path) {
     _currentFile = File(path).absolute;
+    _errorCode = null;
     notifyListeners();
   }
 
@@ -47,7 +48,13 @@ class FileModelProvider extends InheritedWidget {
   final FileModel model;
   const FileModelProvider({super.key, required this.model, required super.child});
 
-  static FileModel of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<FileModelProvider>()!.model;
+  static FileModelProvider? maybeOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<FileModelProvider>();
+
+  static FileModelProvider of(BuildContext context) {
+    final result = maybeOf(context);
+    assert(result != null, 'No FileModelProvider found in context');
+    return result!;
+  }
 
   @override
   bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;

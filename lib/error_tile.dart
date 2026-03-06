@@ -89,7 +89,7 @@ class ErrorTile extends StatelessWidget {
           spacing: 8.0,
           children: [
             TextButton.icon(
-              onPressed: FileModelProvider.of(context).pickFile,
+              onPressed: FileModelProvider.of(context).model.pickFile,
               icon: Icon(Icons.file_open),
               label: Text("파일 선택")
             ),

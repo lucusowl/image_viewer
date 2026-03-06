@@ -107,10 +107,10 @@ class _ViewPageState extends State<ViewPage> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: FileModelProvider.of(context),
+      listenable: FileModelProvider.of(context).model,
       builder: (context, child) {
         _zoomReset(); // 새로 열때 화면 상태 초기화
-        final fileModel = FileModelProvider.of(context);
+        final fileModel = FileModelProvider.of(context).model;
         return Stack(
           children: [
             // 이미지 메인 화면
@@ -122,7 +122,7 @@ class _ViewPageState extends State<ViewPage> {
                 transformationController: _transformController,
                 clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
                 trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                // boundaryMargin: EdgeInsets.all(double.infinity),
+                // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
                 // constrained: false,
                 minScale: _minScale,
                 maxScale: _maxScale,
