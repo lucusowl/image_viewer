@@ -111,37 +111,56 @@ class _ViewPageState extends State<ViewPage> {
       builder: (context, child) {
         _zoomReset(); // 새로 열때 화면 상태 초기화
         final fileModel = FileModelProvider.of(context).model;
-        return Stack(
-          children: [
-            // 이미지 메인 화면
-            Center(
-              child: (fileModel.file == null)
-              ? ErrorTile(errorCode: fileModel.errorCode ?? ErrorCode.unknown)
-              : InteractiveViewer(
-                key: _viewerKey,
-                transformationController: _transformController,
-                clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
-                trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
-                // constrained: false,
-                minScale: _minScale,
-                maxScale: _maxScale,
-                child: Image(
-                  image: FileImage(fileModel.file!),
-                  loadingBuilder:(context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const CircularProgressIndicator();
-                  },
-                  errorBuilder: (context, error, stackTrace) => ErrorTile(
-                    errorCode: ErrorCode.errorLoadImage,
-                    errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+        if (fileModel.file == null) {
+          return Center(child: ErrorTile(errorCode: fileModel.errorCode ?? ErrorCode.unknown));
+        } else {
+          return Stack(
+            children: [
+              // 이미지 메인 화면
+              Center(
+                child: InteractiveViewer(
+                  key: _viewerKey,
+                  transformationController: _transformController,
+                  clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
+                  trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
+                  // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
+                  // constrained: false,
+                  minScale: _minScale,
+                  maxScale: _maxScale,
+                  child: Image(
+                    image: FileImage(fileModel.file!),
+                    loadingBuilder:(context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const CircularProgressIndicator();
+                    },
+                    errorBuilder: (context, error, stackTrace) => ErrorTile(
+                      errorCode: ErrorCode.errorLoadImage,
+                      errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+                    ),
                   ),
                 ),
               ),
-            ),
-        
-            // 이미지 상세 패널
-            if (fileModel.file != null)
+
+              // 이전 파일 이동 버튼
+              if (!fileModel.isFirst)
+                Align(
+                  alignment: .centerLeft,
+                  child: Padding(
+                    padding: const .symmetric(horizontal: 16),
+                    child: IconButton(onPressed: fileModel.previousFile, icon: Icon(Icons.arrow_back), tooltip: "이전",),
+                  )
+                ),
+              // 다음 파일 이동 버튼
+              if (!fileModel.isLast)
+                Align(
+                  alignment: .centerRight,
+                  child: Padding(
+                    padding: const .symmetric(horizontal: 16),
+                    child: IconButton(onPressed: fileModel.nextFile, icon: Icon(Icons.arrow_forward), tooltip: "다음",),
+                  )
+                ),
+
+              // 이미지 상세 패널
               Align(
                 alignment: .bottomCenter,
                 child: Container(
@@ -152,18 +171,20 @@ class _ViewPageState extends State<ViewPage> {
                     children: [
                       Padding(
                         padding: const .all(8.0),
-                        child: Text(fileModel.file!.path.split(Platform.pathSeparator).last),
+                        child: Text(fileModel.file?.path.split(Platform.pathSeparator).last ?? "파일 없음"),
                       ),
                       IconButton(onPressed: _zoomReset, icon: Icon(Icons.fit_screen), tooltip: "화면 초기화",),
                       IconButton(onPressed: _zoomIn, icon: Icon(Icons.zoom_in), tooltip: "2배 확대"),
                       IconButton(onPressed: _zoomOut, icon: Icon(Icons.zoom_out), tooltip: "2배 축소"),
                       IconButton(onPressed: fileModel.pickFile, icon: Icon(Icons.file_open), tooltip: "새 파일 열기"),
+                      // IconButton(onPressed: (){}, icon: Icon(Icons.more_vert), tooltip: "자세히"),
                     ],
                   ),
                 )
               ),
-          ],
-        );
+            ],
+          );
+        }
       },
     );
   }
