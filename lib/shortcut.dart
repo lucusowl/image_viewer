@@ -62,6 +62,16 @@ class ZoomOutViewerAction extends Action<ZoomOutViewerIntent> {
   void invoke(covariant ZoomOutViewerIntent intent) => callback();
 }
 
+/// 화면 집중 용도
+/// InteractiveViewer가 있는 영역만을 표시
+class FocusViewerIntent extends Intent {const FocusViewerIntent();}
+class FocusViewerAction extends Action<FocusViewerIntent> {
+  FocusViewerAction(this.callback);
+  final VoidCallback callback;
+  @override
+  void invoke(covariant FocusViewerIntent intent) => callback();
+}
+
 /// 전역에서 사용할 단축키를 등록하는 위젯
 class GlobalShortcutWrapper extends StatelessWidget {
   final Widget child;
@@ -101,6 +111,8 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         /// 화면 확대: `-` 또는 축소키
         CharacterActivator('-'): ZoomOutViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomOut): ZoomOutViewerIntent(),
+        /// 화면 집중 모드: `space`
+        SingleActivator(LogicalKeyboardKey.space): FocusViewerIntent(),
       },
       child: child,
     );

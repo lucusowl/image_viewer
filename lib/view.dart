@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_viewer/error_tile.dart';
 import 'package:image_viewer/model.dart';
 import 'package:image_viewer/shortcut.dart';
@@ -17,6 +18,7 @@ class _ViewPageState extends State<ViewPage> {
   final double _minScale = 1.0;
   final TransformationController _transformController = TransformationController();
   final GlobalKey _viewerKey = GlobalKey();
+  final ValueNotifier<bool> _isFocusMode = ValueNotifier<bool>(false);
 
   /// 화면 초기화 기능
   void _zoomReset() {
@@ -61,6 +63,11 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
+  /// 화면 집중 모드 토글 기능
+  void _toggleFocusMode() {
+    _isFocusMode.value = !_isFocusMode.value;
+  }
+
   @override
   void dispose() {
     _transformController.dispose();
@@ -79,6 +86,7 @@ class _ViewPageState extends State<ViewPage> {
           ResetViewerIntent: ResetViewerAction(_zoomReset),
           ZoomInViewerIntent: ZoomInViewerAction(_zoomIn),
           ZoomOutViewerIntent: ZoomOutViewerAction(_zoomOut),
+          FocusViewerIntent: FocusViewerAction(_toggleFocusMode),
         },
         child: Focus(
           autofocus: true,
@@ -93,37 +101,49 @@ class _ViewPageState extends State<ViewPage> {
                 return Stack(
                   children: [
                     // 이미지 메인 화면
-                    Center(
-                      child: InteractiveViewer(
-                        key: _viewerKey,
-                        transformationController: _transformController,
-                        clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
-                        trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                        // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
-                        // constrained: false,
-                        minScale: _minScale,
-                        maxScale: _maxScale,
-                        child: Image(
-                          image: FileImage(fileModel.file!),
-                          loadingBuilder:(context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const CircularProgressIndicator();
-                          },
-                          errorBuilder: (context, error, stackTrace) => ErrorTile(
-                            errorCode: ErrorCode.errorLoadImage,
-                            errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+                    RepaintBoundary(
+                      child: Center(
+                        child: InteractiveViewer(
+                          key: _viewerKey,
+                          transformationController: _transformController,
+                          clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
+                          trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
+                          // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
+                          // constrained: false,
+                          minScale: _minScale,
+                          maxScale: _maxScale,
+                          child: Image(
+                            image: FileImage(fileModel.file!),
+                            loadingBuilder:(context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const CircularProgressIndicator();
+                            },
+                            errorBuilder: (context, error, stackTrace) => ErrorTile(
+                              errorCode: ErrorCode.errorLoadImage,
+                              errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+                            ),
                           ),
                         ),
                       ),
                     ),
-
+    // 집중 모드일 경우 위젯에서 제외
+    ValueListenableBuilder<bool>(
+      valueListenable: _isFocusMode,
+      builder: (_, isFocus, _) {
+        return Visibility(
+          visible: !isFocus,
+          maintainState: true,
+          // maintainAnimation: false,
+          // maintainSize: false,
+          child: Stack(
+            children: [
                     // 이전 파일 이동 버튼
                     if (!fileModel.isFirst)
                       Align(
                         alignment: .centerLeft,
                         child: Padding(
                           padding: const .symmetric(horizontal: 16),
-                          child: IconButton(onPressed: fileModel.previousFile, icon: Icon(Icons.arrow_back), tooltip: "이전",),
+                          child: IconButton(onPressed: fileModel.previousFile, icon: const Icon(Icons.arrow_back), tooltip: "이전",),
                         )
                       ),
                     // 다음 파일 이동 버튼
@@ -132,7 +152,7 @@ class _ViewPageState extends State<ViewPage> {
                         alignment: .centerRight,
                         child: Padding(
                           padding: const .symmetric(horizontal: 16),
-                          child: IconButton(onPressed: fileModel.nextFile, icon: Icon(Icons.arrow_forward), tooltip: "다음",),
+                          child: IconButton(onPressed: fileModel.nextFile, icon: const Icon(Icons.arrow_forward), tooltip: "다음",),
                         )
                       ),
 
@@ -141,7 +161,7 @@ class _ViewPageState extends State<ViewPage> {
                       alignment: .bottomCenter,
                       child: Container(
                         padding: const .symmetric(vertical: 16),
-                        decoration: BoxDecoration(color: Colors.black54),
+                        decoration: const BoxDecoration(color: Colors.black54),
                         child: Row(
                           mainAxisAlignment: .center,
                           children: [
@@ -149,15 +169,48 @@ class _ViewPageState extends State<ViewPage> {
                               padding: const .all(8.0),
                               child: Text(fileModel.file?.path.split(Platform.pathSeparator).last ?? "파일 없음"),
                             ),
-                            IconButton(onPressed: _zoomReset, icon: Icon(Icons.fit_screen), tooltip: "화면 초기화",),
-                            IconButton(onPressed: _zoomIn, icon: Icon(Icons.zoom_in), tooltip: "2배 확대"),
-                            IconButton(onPressed: _zoomOut, icon: Icon(Icons.zoom_out), tooltip: "2배 축소"),
-                            IconButton(onPressed: fileModel.pickFile, icon: Icon(Icons.file_open), tooltip: "새 파일 열기"),
-                            // IconButton(onPressed: (){}, icon: Icon(Icons.more_vert), tooltip: "자세히"),
+                            IconButton(onPressed: _zoomReset, icon: const Icon(Icons.fit_screen), tooltip: "화면 초기화",),
+                            IconButton(onPressed: _zoomIn, icon: const Icon(Icons.zoom_in), tooltip: "2배 확대"),
+                            IconButton(onPressed: _zoomOut, icon: const Icon(Icons.zoom_out), tooltip: "2배 축소"),
+                            MenuAnchor(
+                              menuChildren: [
+                                MenuItemButton(
+                                  onPressed: fileModel.pickFile,
+                                  style: const ButtonStyle(padding: WidgetStatePropertyAll(.all(16.0))),
+                                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
+                                  leadingIcon: const Icon(Icons.file_open, size: 18.0),
+                                  child: const Text("새 파일 열기"),
+                                ),
+                                const Divider(),
+                                MenuItemButton(
+                                  onPressed: _toggleFocusMode,
+                                  style: const ButtonStyle(padding: WidgetStatePropertyAll(.all(16.0))),
+                                  shortcut: const SingleActivator(LogicalKeyboardKey.space),
+                                  leadingIcon: const Icon(Icons.image, size: 18.0),
+                                  child: const Text("집중 모드"),
+                                ),
+                              ],
+                              builder: (BuildContext context, MenuController controller, Widget? child) {
+                                return IconButton(
+                                  onPressed: () {
+                                    if (controller.isOpen) {controller.close();}
+                                    else {controller.open();}
+                                  },
+                                  icon: const Icon(Icons.more_vert),
+                                  tooltip: "더보기",
+                                );
+                              },
+                              alignmentOffset: const Offset(0.0, 8.0),
+                            ),
                           ],
                         ),
                       )
                     ),
+            ],
+          ),
+        );
+      },
+    ),
                   ],
                 );
               }
