@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image_viewer/view.dart';
+import 'package:image_viewer/global_wrapper.dart';
 
 void main(List<String> args) {
   String? initialFilePath;
@@ -25,9 +25,7 @@ class ImageViewerApp extends StatelessWidget {
         textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(backgroundColor: Colors.amber.withAlpha(20)))
       ),
       // debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: ViewPageWrapper(filePath: filePath)
-      )
+      home: GlobalWrapperWidget(filePath: filePath)
     );
   }
 }
