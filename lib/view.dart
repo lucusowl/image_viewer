@@ -169,9 +169,9 @@ class _ViewPageState extends State<ViewPage> {
                               padding: const .all(8.0),
                               child: Text(fileModel.file?.path.split(Platform.pathSeparator).last ?? "파일 없음"),
                             ),
-                            IconButton(onPressed: _zoomReset, icon: const Icon(Icons.fit_screen), tooltip: "화면 초기화",),
-                            IconButton(onPressed: _zoomIn, icon: const Icon(Icons.zoom_in), tooltip: "2배 확대"),
-                            IconButton(onPressed: _zoomOut, icon: const Icon(Icons.zoom_out), tooltip: "2배 축소"),
+                            IconButton(onPressed: _zoomReset, icon: const Icon(Icons.fit_screen), tooltip: "화면 초기화 (t)",),
+                            IconButton(onPressed: _zoomIn, icon: const Icon(Icons.zoom_in), tooltip: "2배 확대 (+)"),
+                            IconButton(onPressed: _zoomOut, icon: const Icon(Icons.zoom_out), tooltip: "2배 축소 (-)"),
                             MenuAnchor(
                               menuChildren: [
                                 MenuItemButton(
