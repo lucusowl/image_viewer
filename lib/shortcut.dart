@@ -103,16 +103,16 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.arrowRight): MoveToNextFileIntent(),
         /// 새 파일 열기: `Ctrl + o`
         SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
-        /// 화면 초기화: `t`
-        SingleActivator(LogicalKeyboardKey.keyT): ResetViewerIntent(),
+        /// 화면 초기화: `space`
+        SingleActivator(LogicalKeyboardKey.space): ResetViewerIntent(),
         /// 화면 확대: `+` 또는 확대키
         CharacterActivator('+'): ZoomInViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomIn): ZoomInViewerIntent(),
         /// 화면 확대: `-` 또는 축소키
         CharacterActivator('-'): ZoomOutViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomOut): ZoomOutViewerIntent(),
-        /// 화면 집중 모드: `space`
-        SingleActivator(LogicalKeyboardKey.space): FocusViewerIntent(),
+        /// 화면 집중 모드: `t`
+        SingleActivator(LogicalKeyboardKey.keyT): FocusViewerIntent(),
       },
       child: child,
     );
