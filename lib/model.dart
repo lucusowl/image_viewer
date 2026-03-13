@@ -25,9 +25,9 @@ class FileModel with ChangeNotifier {
   /// `FileModel`의 현재 에러코드를 반환, 없을 경우 null
   ErrorCode? get errorCode => _errorCode;
   /// `FileModel`의 현재 파일이 파일 목록의 1번째인지 여부를 반환
-  bool get isFirst => (_currentIndex == 0);
+  bool get isFirst => (_currentIndex == -1 || _currentIndex == 0);
   /// `FileModel`의 현재 파일이 파일 목록의 마지막인지 여부를 반환
-  bool get isLast => (_currentIndex == _currentFileList.length-1);
+  bool get isLast => (_currentIndex == -1 || _currentIndex == _currentFileList.length-1);
 
   /// 현재 파일을 갱신
   /// 재빌드 요청없이 진행용도로 사용할 것. (최초 빌드)
@@ -71,13 +71,25 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
-  /// 파일 목록 갱신
+  /// 파일 목록 변경 알림자
+  ValueNotifier<bool>? _isReadyFileList;
+  /// 파일 목록 변경 알림자 등록 및 현재 상황으로 갱신
+  void setFileListNotifier(ValueNotifier<bool> notifier) {
+    _isReadyFileList = notifier;
+    if (_currentIndex == -1) {
+      notifier.value = false;
+    } else {
+      notifier.value = true;
+    }
+  }
+  /// 파일 목록 갱신.
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
   Future<void> updateCurrentFileList() async {
     _currentDirectory = _currentFile!.parent;
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
+    _isReadyFileList?.value = false;
 
     int tempIndex = 0;
     _currentDirectory!.list().listen((FileSystemEntity entity) {
@@ -92,6 +104,12 @@ class FileModel with ChangeNotifier {
         if (entity.path == _currentFile!.path) {_currentIndex = tempIndex;}
         tempIndex++;
       }
+    },
+    onDone: () {
+      _isReadyFileList?.value = true;
+    },
+    onError: (_) {
+      _isReadyFileList?.value = false;
     });
   }
 

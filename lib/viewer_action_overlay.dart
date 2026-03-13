@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:image_viewer/model.dart';
 import 'package:image_viewer/shortcut.dart';
 
-class ViewerActionOverlay extends StatelessWidget {
-  const ViewerActionOverlay({super.key});
- 
+class FileMoveIndicator extends StatelessWidget {
+  const FileMoveIndicator({super.key});
+
   @override
   Widget build(BuildContext context) {
     final fileModel = FileModelProvider.of(context).model;
@@ -38,6 +38,44 @@ class ViewerActionOverlay extends StatelessWidget {
               ),
             )
           ),
+      ],
+    );
+  }
+}
+
+class ViewerActionOverlay extends StatefulWidget {
+  const ViewerActionOverlay({super.key});
+
+  @override
+  State<ViewerActionOverlay> createState() => _ViewerActionOverlayState();
+}
+
+class _ViewerActionOverlayState extends State<ViewerActionOverlay> {
+  final ValueNotifier<bool> _isReadyFileList = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FileModelProvider.of(context).model.setFileListNotifier(_isReadyFileList);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fileModel = FileModelProvider.of(context).model;
+    return Stack(
+      children: [
+        // 좌우 파일 이동 버튼
+        ValueListenableBuilder(
+          valueListenable: _isReadyFileList,
+          builder:(_, isReady, _) {
+            return Visibility(
+              visible: isReady,
+              child: FileMoveIndicator(),
+            );
+          }
+        ),
 
         // 하단 화면 조작 패널
         Align(
@@ -54,17 +92,17 @@ class ViewerActionOverlay extends StatelessWidget {
                 ),
 
                 IconButton(
-                  onPressed: Actions.handler<ResetViewerIntent>(context, ResetViewerIntent()),
+                  onPressed: Actions.handler<ResetViewerIntent>(context, const ResetViewerIntent()),
                   icon: const Icon(Icons.fit_screen),
                   tooltip: "화면 초기화 (space)",
                 ),
                 IconButton(
-                  onPressed: Actions.handler<ZoomInViewerIntent>(context, ZoomInViewerIntent()),
+                  onPressed: Actions.handler<ZoomInViewerIntent>(context, const ZoomInViewerIntent()),
                   icon: const Icon(Icons.zoom_in),
                   tooltip: "2배 확대 (+)"
                 ),
                 IconButton(
-                  onPressed: Actions.handler<ZoomOutViewerIntent>(context, ZoomOutViewerIntent()),
+                  onPressed: Actions.handler<ZoomOutViewerIntent>(context, const ZoomOutViewerIntent()),
                   icon: const Icon(Icons.zoom_out),
                   tooltip: "2배 축소 (-)"
                 ),
