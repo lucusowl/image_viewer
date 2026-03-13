@@ -102,25 +102,28 @@ class _ViewPageState extends State<ViewPage> {
                   children: [
                     // 이미지 메인 화면
                     RepaintBoundary(
-                      child: Center(
-                        child: InteractiveViewer(
-                          key: _viewerKey,
-                          transformationController: _transformController,
-                          clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
-                          trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                          // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
-                          // constrained: false,
-                          minScale: _minScale,
-                          maxScale: _maxScale,
-                          child: Image(
-                            image: FileImage(fileModel.file!),
-                            loadingBuilder:(context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const CircularProgressIndicator();
-                            },
-                            errorBuilder: (context, error, stackTrace) => ErrorTile(
-                              errorCode: ErrorCode.errorLoadImage,
-                              errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+                      child: GestureDetector(
+                        onTap: _toggleFocusMode,
+                        child: Center(
+                          child: InteractiveViewer(
+                            key: _viewerKey,
+                            transformationController: _transformController,
+                            clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
+                            trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
+                            // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
+                            // constrained: false,
+                            minScale: _minScale,
+                            maxScale: _maxScale,
+                            child: Image(
+                              image: FileImage(fileModel.file!),
+                              loadingBuilder:(context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const CircularProgressIndicator();
+                              },
+                              errorBuilder: (context, error, stackTrace) => ErrorTile(
+                                errorCode: ErrorCode.errorLoadImage,
+                                errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
+                              ),
                             ),
                           ),
                         ),
