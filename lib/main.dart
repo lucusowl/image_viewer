@@ -22,9 +22,10 @@ class ImageViewerApp extends StatelessWidget {
       title: "Image Viewer",
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.amber, brightness: .dark),
-        textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(backgroundColor: Colors.amber.withAlpha(20)))
+        textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(backgroundColor: Colors.amber.withAlpha(20))),
+        menuButtonTheme: MenuButtonThemeData(style: MenuItemButton.styleFrom(padding: const .all(12.0)))
       ),
-      // debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
       home: GlobalWrapperWidget(filePath: filePath)
     );
   }

@@ -143,7 +143,7 @@ class _ViewPageState extends State<ViewPage> {
                         alignment: .centerLeft,
                         child: Padding(
                           padding: const .symmetric(horizontal: 16),
-                          child: IconButton(onPressed: fileModel.previousFile, icon: const Icon(Icons.arrow_back), tooltip: "이전",),
+                          child: IconButton(onPressed: Actions.handler<MoveToPreviousFileIntent>(context, MoveToPreviousFileIntent()), icon: const Icon(Icons.arrow_back), tooltip: "이전",),
                         )
                       ),
                     // 다음 파일 이동 버튼
@@ -152,7 +152,7 @@ class _ViewPageState extends State<ViewPage> {
                         alignment: .centerRight,
                         child: Padding(
                           padding: const .symmetric(horizontal: 16),
-                          child: IconButton(onPressed: fileModel.nextFile, icon: const Icon(Icons.arrow_forward), tooltip: "다음",),
+                          child: IconButton(onPressed: Actions.handler<MoveToNextFileIntent>(context, MoveToNextFileIntent()), icon: const Icon(Icons.arrow_forward), tooltip: "다음",),
                         )
                       ),
 
@@ -169,22 +169,20 @@ class _ViewPageState extends State<ViewPage> {
                               padding: const .all(8.0),
                               child: Text(fileModel.file?.path.split(Platform.pathSeparator).last ?? "파일 없음"),
                             ),
-                            IconButton(onPressed: _zoomReset, icon: const Icon(Icons.fit_screen), tooltip: "화면 초기화 (space)",),
-                            IconButton(onPressed: _zoomIn, icon: const Icon(Icons.zoom_in), tooltip: "2배 확대 (+)"),
-                            IconButton(onPressed: _zoomOut, icon: const Icon(Icons.zoom_out), tooltip: "2배 축소 (-)"),
+                            IconButton(onPressed: Actions.handler<ResetViewerIntent>(context, ResetViewerIntent()), icon: const Icon(Icons.fit_screen), tooltip: "화면 초기화 (space)",),
+                            IconButton(onPressed: Actions.handler<ZoomInViewerIntent>(context, ZoomInViewerIntent()), icon: const Icon(Icons.zoom_in), tooltip: "2배 확대 (+)"),
+                            IconButton(onPressed: Actions.handler<ZoomOutViewerIntent>(context, ZoomOutViewerIntent()), icon: const Icon(Icons.zoom_out), tooltip: "2배 축소 (-)"),
                             MenuAnchor(
                               menuChildren: [
                                 MenuItemButton(
-                                  onPressed: fileModel.pickFile,
-                                  style: const ButtonStyle(padding: WidgetStatePropertyAll(.all(16.0))),
+                                  onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
                                   shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
                                   leadingIcon: const Icon(Icons.file_open, size: 18.0),
                                   child: const Text("새 파일 열기"),
                                 ),
                                 const Divider(),
                                 MenuItemButton(
-                                  onPressed: _toggleFocusMode,
-                                  style: const ButtonStyle(padding: WidgetStatePropertyAll(.all(16.0))),
+                                  onPressed: Actions.handler<FocusViewerIntent>(context, FocusViewerIntent()),
                                   shortcut: const SingleActivator(LogicalKeyboardKey.keyT),
                                   leadingIcon: const Icon(Icons.image, size: 18.0),
                                   child: const Text("집중 모드"),
