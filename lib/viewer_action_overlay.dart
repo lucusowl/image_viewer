@@ -122,6 +122,12 @@ class _ViewerActionOverlayState extends State<ViewerActionOverlay> {
                       leadingIcon: const Icon(Icons.image, size: 18.0),
                       child: const Text("집중 모드"),
                     ),
+                    MenuItemButton(
+                      onPressed: Actions.handler<FullScreenIntent>(context, FullScreenIntent()),
+                      shortcut: const SingleActivator(LogicalKeyboardKey.keyF),
+                      leadingIcon: const Icon(Icons.fullscreen, size: 18.0),
+                      child: const Text("전체화면 모드"),
+                    ),
                   ],
                   builder: (BuildContext context, MenuController controller, Widget? child) {
                     return IconButton(

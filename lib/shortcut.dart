@@ -72,6 +72,24 @@ class FocusViewerAction extends Action<FocusViewerIntent> {
   void invoke(covariant FocusViewerIntent intent) => callback();
 }
 
+/// 전체화면 모드 용도
+/// 앱의 창 상태를 전체화면 모드로 토글
+class FullScreenIntent extends Intent {const FullScreenIntent();}
+class FullScreenAction extends Action<FullScreenIntent> {
+  FullScreenAction();
+  @override
+  void invoke(covariant FullScreenIntent intent) {
+    try {
+      final platform = MethodChannel('com.example.app/window_control');
+      platform.invokeMethod('toggleFullScreen').onError((e, s) {
+        debugPrint("Failed to toggle fullscreen: $e");
+      }); // 주의: 비동기함수
+    } on PlatformException catch (e) {
+      debugPrint("Failed to toggle fullscreen: ${e.message}");
+    }
+  }
+}
+
 /// 전역에서 사용할 단축키를 등록하는 위젯
 class GlobalShortcutWrapper extends StatelessWidget {
   final Widget child;
@@ -81,9 +99,16 @@ class GlobalShortcutWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        ///
+        /// 전체화면 모드: `F11` 또는 `f`
+        SingleActivator(LogicalKeyboardKey.f11): FullScreenIntent(),
+        SingleActivator(LogicalKeyboardKey.keyF): FullScreenIntent(),
       },
-      child: child,
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          FullScreenIntent: FullScreenAction(),
+        },
+        child: child
+      ),
     );
   }
 }
