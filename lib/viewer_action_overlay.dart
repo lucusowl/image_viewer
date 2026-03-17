@@ -62,6 +62,12 @@ class _ViewerActionOverlayState extends State<ViewerActionOverlay> {
   }
 
   @override
+  void dispose() {
+    _isReadyFileList.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final fileModel = FileModelProvider.of(context).model;
     return Stack(
@@ -115,6 +121,30 @@ class _ViewerActionOverlayState extends State<ViewerActionOverlay> {
                       leadingIcon: const Icon(Icons.file_open, size: 18.0),
                       child: const Text("새 파일 열기"),
                     ),
+                    MenuItemButton(
+                      onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+                      shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
+                      leadingIcon: const Icon(Icons.folder_open, size: 18.0),
+                      child: const Text("새 폴더 열기"),
+                    ),
+                    // MenuItemButton(
+                    //   // onPressed: Actions.handler<T>(context, T()),
+                    //   shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
+                    //   leadingIcon: const Icon(Icons.palette, size: 18.0),
+                    //   child: const Text("그림판으로 열기"),
+                    // ),
+                    // MenuItemButton(
+                    //   // onPressed: Actions.handler<T>(context, T()),
+                    //   shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
+                    //   leadingIcon: const Icon(Icons.save, size: 18.0),
+                    //   child: const Text("다른 이름으로 저장"),
+                    // ),
+                    // MenuItemButton(
+                    //   // onPressed: Actions.handler<T>(context, T()),
+                    //   shortcut: const SingleActivator(LogicalKeyboardKey.delete),
+                    //   leadingIcon: const Icon(Icons.delete, size: 18.0),
+                    //   child: const Text("삭제"),
+                    // ),
                     const Divider(),
                     MenuItemButton(
                       onPressed: Actions.handler<FocusViewerIntent>(context, FocusViewerIntent()),

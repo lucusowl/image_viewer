@@ -70,6 +70,7 @@ class _ViewPageState extends State<ViewPage> {
   @override
   void dispose() {
     _transformController.dispose();
+    _isFocusMode.dispose();
     super.dispose();
   }
 
@@ -80,6 +81,7 @@ class _ViewPageState extends State<ViewPage> {
       child: Actions(
         actions: <Type, Action<Intent>>{
           OpenNewFileIntent: OpenNewFileAction(model),
+          OpenNewDirectoryIntent: OpenNewDirectoryAction(model),
           MoveToPreviousFileIntent: MoveToPreviousFileAction(model),
           MoveToNextFileIntent: MoveToNextFileAction(model),
           ResetViewerIntent: ResetViewerAction(_zoomReset),

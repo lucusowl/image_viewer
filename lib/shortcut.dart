@@ -29,7 +29,16 @@ class OpenNewFileAction extends Action<OpenNewFileIntent> {
   OpenNewFileAction(this.model);
   final FileModel model;
   @override
-  void invoke(covariant OpenNewFileIntent intent) => model.pickFile();
+  Future<bool> invoke(covariant OpenNewFileIntent intent) => model.pickFile();
+}
+
+/// 현재 폴더 갱신 용도
+class OpenNewDirectoryIntent extends Intent {const OpenNewDirectoryIntent();}
+class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
+  OpenNewDirectoryAction(this.model);
+  final FileModel model;
+  @override
+  Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
 
 /// 화면 맞추기 용도
@@ -78,16 +87,7 @@ class FullScreenIntent extends Intent {const FullScreenIntent();}
 class FullScreenAction extends Action<FullScreenIntent> {
   FullScreenAction();
   @override
-  void invoke(covariant FullScreenIntent intent) {
-    try {
-      final platform = MethodChannel('com.example.app/window_control');
-      platform.invokeMethod('toggleFullScreen').onError((e, s) {
-        debugPrint("Failed to toggle fullscreen: $e");
-      }); // 주의: 비동기함수
-    } on PlatformException catch (e) {
-      debugPrint("Failed to toggle fullscreen: ${e.message}");
-    }
-  }
+  void invoke(covariant FullScreenIntent intent) => WindowController.toggleFullscreen();
 }
 
 /// 전역에서 사용할 단축키를 등록하는 위젯
@@ -128,6 +128,8 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.arrowRight): MoveToNextFileIntent(),
         /// 새 파일 열기: `Ctrl + o`
         SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
+        /// 새 폴더 열기: `Ctrl + o`
+        SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
         /// 화면 초기화: `space`
         SingleActivator(LogicalKeyboardKey.space): ResetViewerIntent(),
         /// 화면 확대: `+` 또는 확대키

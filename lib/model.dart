@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:image_viewer/error_tile.dart';
 
@@ -44,14 +45,6 @@ class FileModel with ChangeNotifier {
     }
   }
 
-  /// 현재 파일을 갱신
-  void updateFile(String path) {
-    _currentFile = File(path).absolute;
-    _errorCode = null;
-    notifyListeners();
-    updateCurrentFileList();
-  }
-
   /// 갱신할 파일을 선택
   /// 갱신할 파일이 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickFile() async {
@@ -65,9 +58,29 @@ class FileModel with ChangeNotifier {
     const XTypeGroup allTypeGroup = XTypeGroup(label: "All Files");
 
     final XFile? file = await openFile(acceptedTypeGroups: [imageTypeGroup, allTypeGroup]);
-
     if (file == null) return false;
-    updateFile(file.path);
+
+    _currentFile = File(file.path).absolute;
+    _currentDirectory = _currentFile!.parent;
+    _errorCode = null;
+    notifyListeners();
+
+    updateCurrentFileList();
+    return true;
+  }
+
+  /// 갱신할 폴더 선택
+  /// 갱신할 폴더가 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
+  Future<bool> pickDirectory() async {
+    final String? path = await getDirectoryPath();
+    if (path == null) return false;
+
+    _currentDirectory = Directory(path).absolute;
+    _currentFile = (await _currentDirectory?.list().first) as File;
+    _errorCode = null;
+    notifyListeners();
+
+    updateCurrentFileList();
     return true;
   }
 
@@ -85,7 +98,6 @@ class FileModel with ChangeNotifier {
   /// 파일 목록 갱신.
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
   Future<void> updateCurrentFileList() async {
-    _currentDirectory = _currentFile!.parent;
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
@@ -151,4 +163,19 @@ class FileModelProvider extends InheritedWidget {
 
   @override
   bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;
+}
+
+class WindowController {
+  static final platform = MethodChannel('com.example.app/window_control');
+
+  /// Window 창의 FullScreen을 토글
+  static void toggleFullscreen() {
+    try {
+      platform.invokeMethod('toggleFullScreen').onError((e, s) {
+        debugPrint("Failed to toggle fullscreen: $e");
+      });
+    } on PlatformException catch (e) {
+      debugPrint("Failed to toggle fullscreen: ${e.message}");
+    }
+  }
 }
