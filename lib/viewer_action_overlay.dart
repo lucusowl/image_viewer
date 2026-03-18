@@ -43,139 +43,132 @@ class FileMoveIndicator extends StatelessWidget {
   }
 }
 
-class ViewerActionOverlay extends StatefulWidget {
-  const ViewerActionOverlay({super.key});
-
-  @override
-  State<ViewerActionOverlay> createState() => _ViewerActionOverlayState();
-}
-
-class _ViewerActionOverlayState extends State<ViewerActionOverlay> {
-  final ValueNotifier<bool> _isReadyFileList = ValueNotifier<bool>(false);
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FileModelProvider.of(context).model.setFileListNotifier(_isReadyFileList);
-    });
-  }
-
-  @override
-  void dispose() {
-    _isReadyFileList.dispose();
-    super.dispose();
-  }
+class ViewerBottomPanel extends StatelessWidget {
+  const ViewerBottomPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final fileModel = FileModelProvider.of(context).model;
-    return Stack(
-      children: [
-        // 좌우 파일 이동 버튼
-        ValueListenableBuilder(
-          valueListenable: _isReadyFileList,
-          builder:(_, isReady, _) {
-            return Visibility(
-              visible: isReady,
-              child: FileMoveIndicator(),
-            );
-          }
-        ),
+    return Align(
+      alignment: .bottomCenter,
+      child: Container(
+        padding: const .symmetric(vertical: 16),
+        decoration: const BoxDecoration(color: Colors.black54),
+        child: Row(
+          mainAxisAlignment: .center,
+          children: [
+            Padding(
+              padding: const .all(8.0),
+              child: ListenableBuilder(
+                listenable: FileModelProvider.of(context).model,
+                builder: (BuildContext context, _) {
+                  return Text(FileModelProvider.of(context).model.file?.path.split(Platform.pathSeparator).last ?? "파일 없음");
+                }
+              ),
+            ),
 
-        // 하단 화면 조작 패널
-        Align(
-          alignment: .bottomCenter,
-          child: Container(
-            padding: const .symmetric(vertical: 16),
-            decoration: const BoxDecoration(color: Colors.black54),
-            child: Row(
-              mainAxisAlignment: .center,
-              children: [
-                Padding(
-                  padding: const .all(8.0),
-                  child: Text(fileModel.file?.path.split(Platform.pathSeparator).last ?? "파일 없음"),
-                ),
+            IconButton(
+              onPressed: Actions.handler<ResetViewerIntent>(context, const ResetViewerIntent()),
+              icon: const Icon(Icons.fit_screen),
+              tooltip: "화면 초기화 (space)",
+            ),
+            IconButton(
+              onPressed: Actions.handler<ZoomInViewerIntent>(context, const ZoomInViewerIntent()),
+              icon: const Icon(Icons.zoom_in),
+              tooltip: "2배 확대 (+)"
+            ),
+            IconButton(
+              onPressed: Actions.handler<ZoomOutViewerIntent>(context, const ZoomOutViewerIntent()),
+              icon: const Icon(Icons.zoom_out),
+              tooltip: "2배 축소 (-)"
+            ),
 
-                IconButton(
-                  onPressed: Actions.handler<ResetViewerIntent>(context, const ResetViewerIntent()),
-                  icon: const Icon(Icons.fit_screen),
-                  tooltip: "화면 초기화 (space)",
+            MenuAnchor(
+              menuChildren: [
+                MenuItemButton(
+                  onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
+                  leadingIcon: const Icon(Icons.file_open, size: 18.0),
+                  child: const Text("새 파일 열기"),
                 ),
-                IconButton(
-                  onPressed: Actions.handler<ZoomInViewerIntent>(context, const ZoomInViewerIntent()),
-                  icon: const Icon(Icons.zoom_in),
-                  tooltip: "2배 확대 (+)"
+                MenuItemButton(
+                  onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
+                  leadingIcon: const Icon(Icons.folder_open, size: 18.0),
+                  child: const Text("새 폴더 열기"),
                 ),
-                IconButton(
-                  onPressed: Actions.handler<ZoomOutViewerIntent>(context, const ZoomOutViewerIntent()),
-                  icon: const Icon(Icons.zoom_out),
-                  tooltip: "2배 축소 (-)"
+                // MenuItemButton(
+                //   // onPressed: Actions.handler<T>(context, T()),
+                //   shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
+                //   leadingIcon: const Icon(Icons.palette, size: 18.0),
+                //   child: const Text("그림판으로 열기"),
+                // ),
+                // MenuItemButton(
+                //   // onPressed: Actions.handler<T>(context, T()),
+                //   shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
+                //   leadingIcon: const Icon(Icons.save, size: 18.0),
+                //   child: const Text("다른 이름으로 저장"),
+                // ),
+                // MenuItemButton(
+                //   // onPressed: Actions.handler<T>(context, T()),
+                //   shortcut: const SingleActivator(LogicalKeyboardKey.delete),
+                //   leadingIcon: const Icon(Icons.delete, size: 18.0),
+                //   child: const Text("삭제"),
+                // ),
+                const Divider(),
+                MenuItemButton(
+                  onPressed: Actions.handler<FocusViewerIntent>(context, FocusViewerIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyT),
+                  leadingIcon: const Icon(Icons.image, size: 18.0),
+                  child: const Text("집중 모드"),
                 ),
-
-                MenuAnchor(
-                  menuChildren: [
-                    MenuItemButton(
-                      onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
-                      shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
-                      leadingIcon: const Icon(Icons.file_open, size: 18.0),
-                      child: const Text("새 파일 열기"),
-                    ),
-                    MenuItemButton(
-                      onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
-                      shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
-                      leadingIcon: const Icon(Icons.folder_open, size: 18.0),
-                      child: const Text("새 폴더 열기"),
-                    ),
-                    // MenuItemButton(
-                    //   // onPressed: Actions.handler<T>(context, T()),
-                    //   shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
-                    //   leadingIcon: const Icon(Icons.palette, size: 18.0),
-                    //   child: const Text("그림판으로 열기"),
-                    // ),
-                    // MenuItemButton(
-                    //   // onPressed: Actions.handler<T>(context, T()),
-                    //   shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
-                    //   leadingIcon: const Icon(Icons.save, size: 18.0),
-                    //   child: const Text("다른 이름으로 저장"),
-                    // ),
-                    // MenuItemButton(
-                    //   // onPressed: Actions.handler<T>(context, T()),
-                    //   shortcut: const SingleActivator(LogicalKeyboardKey.delete),
-                    //   leadingIcon: const Icon(Icons.delete, size: 18.0),
-                    //   child: const Text("삭제"),
-                    // ),
-                    const Divider(),
-                    MenuItemButton(
-                      onPressed: Actions.handler<FocusViewerIntent>(context, FocusViewerIntent()),
-                      shortcut: const SingleActivator(LogicalKeyboardKey.keyT),
-                      leadingIcon: const Icon(Icons.image, size: 18.0),
-                      child: const Text("집중 모드"),
-                    ),
-                    MenuItemButton(
-                      onPressed: Actions.handler<FullScreenIntent>(context, FullScreenIntent()),
-                      shortcut: const SingleActivator(LogicalKeyboardKey.keyF),
-                      leadingIcon: const Icon(Icons.fullscreen, size: 18.0),
-                      child: const Text("전체화면 모드"),
-                    ),
-                  ],
-                  builder: (BuildContext context, MenuController controller, Widget? child) {
-                    return IconButton(
-                      onPressed: () {
-                        if (controller.isOpen) {controller.close();}
-                        else {controller.open();}
-                      },
-                      icon: const Icon(Icons.more_vert),
-                      tooltip: "더보기",
-                    );
-                  },
-                  alignmentOffset: const Offset(0.0, 8.0),
+                MenuItemButton(
+                  onPressed: Actions.handler<FullScreenIntent>(context, FullScreenIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyF),
+                  leadingIcon: const Icon(Icons.fullscreen, size: 18.0),
+                  child: const Text("전체화면 모드"),
                 ),
               ],
+              builder: (BuildContext context, MenuController controller, Widget? child) {
+                return IconButton(
+                  onPressed: () {
+                    if (controller.isOpen) {controller.close();}
+                    else {controller.open();}
+                  },
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: "더보기",
+                );
+              },
+              alignmentOffset: const Offset(0.0, 8.0),
             ),
-          )
+          ],
         ),
-      ],
+      )
+    );
+  }
+}
+
+class ViewerActionOverlay extends StatelessWidget {
+  const ViewerActionOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: FileModelProvider.of(context).model.isReadyFileList,
+      builder:(_, bool isReady, Widget? child) {
+        return Stack(
+          children: [
+            // 좌우 파일 이동 버튼
+            // 파일목록이 갱신중이라면 미표시
+            Visibility(
+              visible: isReady,
+              child: FileMoveIndicator(),
+            ),
+            // 하단 화면 조작 패널
+            child!,
+          ],
+        );
+      },
+      child: ViewerBottomPanel(),
     );
   }
 }

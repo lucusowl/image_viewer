@@ -93,6 +93,11 @@ class ErrorTile extends StatelessWidget {
               icon: Icon(Icons.file_open),
               label: Text("파일 선택")
             ),
+            TextButton.icon(
+              onPressed: FileModelProvider.of(context).model.pickDirectory,
+              icon: Icon(Icons.folder_open),
+              label: Text("폴더 선택")
+            ),
           ],
         );
         break;

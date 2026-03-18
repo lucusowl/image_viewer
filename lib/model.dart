@@ -85,23 +85,15 @@ class FileModel with ChangeNotifier {
   }
 
   /// 파일 목록 변경 알림자
-  ValueNotifier<bool>? _isReadyFileList;
-  /// 파일 목록 변경 알림자 등록 및 현재 상황으로 갱신
-  void setFileListNotifier(ValueNotifier<bool> notifier) {
-    _isReadyFileList = notifier;
-    if (_currentIndex == -1) {
-      notifier.value = false;
-    } else {
-      notifier.value = true;
-    }
-  }
+  final ValueNotifier<bool> _isReadyFileList = ValueNotifier<bool>(false);
+  ValueNotifier<bool> get isReadyFileList => _isReadyFileList;
   /// 파일 목록 갱신.
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
   Future<void> updateCurrentFileList() async {
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
-    _isReadyFileList?.value = false;
+    _isReadyFileList.value = false;
 
     int tempIndex = 0;
     _currentDirectory!.list().listen((FileSystemEntity entity) {
@@ -118,10 +110,10 @@ class FileModel with ChangeNotifier {
       }
     },
     onDone: () {
-      _isReadyFileList?.value = true;
+      _isReadyFileList.value = true;
     },
     onError: (_) {
-      _isReadyFileList?.value = false;
+      _isReadyFileList.value = false;
     });
   }
 
@@ -147,6 +139,12 @@ class FileModel with ChangeNotifier {
       return false;
     }
   }
+
+  @override
+  void dispose() {
+    _isReadyFileList.dispose();
+    super.dispose();
+  }
 }
 
 class FileModelProvider extends InheritedWidget {
@@ -165,6 +163,8 @@ class FileModelProvider extends InheritedWidget {
   bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;
 }
 
+/// Windows 네이티브 코드 연결 객체
+/// 상세한 코드는 `/windows/runner/flutter_window.cpp`를 확인
 class WindowController {
   static final platform = MethodChannel('com.example.app/window_control');
 

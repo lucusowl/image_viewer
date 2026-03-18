@@ -21,11 +21,15 @@ class _ViewPageState extends State<ViewPage> {
 
   /// 화면 초기화 기능
   void _zoomReset() {
+    // _transformController 가 적용된 이후에만 동작
+    if (!mounted) return;
     _transformController.value = Matrix4.identity();
   }
 
   /// 화면 zoom 기능
   void _zoomByScale(double targetScale) {
+    // _transformController 가 적용된 이후에만 동작
+    if (!mounted) return;
     final Matrix4 currentMatrix = _transformController.value;
 
     final Size? viewerSize = _viewerKey.currentContext?.size;
@@ -46,6 +50,7 @@ class _ViewPageState extends State<ViewPage> {
 
   /// 2배 확대
   void _zoomIn() {
+    // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
     const double targetScale = 2.0;
     if (_transformController.value.getMaxScaleOnAxis() * targetScale <= _maxScale) {
@@ -55,6 +60,7 @@ class _ViewPageState extends State<ViewPage> {
 
   /// 2배 축소
   void _zoomOut() {
+    // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
     const double targetScale = 0.5;
     if (_transformController.value.getMaxScaleOnAxis() * targetScale >= _minScale) {
@@ -91,62 +97,73 @@ class _ViewPageState extends State<ViewPage> {
         },
         child: Focus(
           autofocus: true,
-          child: ListenableBuilder(
-            listenable: model,
-            builder: (BuildContext context, Widget? child) {
-              final fileModel = FileModelProvider.of(context).model;
-              _zoomReset(); // 새로 열 때마다 화면 상태 초기화
-              if (fileModel.file == null) {
-                return Center(child: ErrorTile(errorCode: fileModel.errorCode ?? ErrorCode.unknown));
-              } else {
-                return Stack(
-                  children: [
-                    // 이미지 메인 화면
-                    RepaintBoundary(
-                      child: GestureDetector(
-                        onTap: _toggleFocusMode,
-                        child: Center(
-                          child: InteractiveViewer(
-                            key: _viewerKey,
-                            transformationController: _transformController,
-                            clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
-                            trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                            // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
-                            // constrained: false,
-                            minScale: _minScale,
-                            maxScale: _maxScale,
-                            child: Image(
-                              image: FileImage(fileModel.file!),
-                              loadingBuilder:(context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const CircularProgressIndicator();
-                              },
-                              errorBuilder: (context, error, stackTrace) => ErrorTile(
-                                errorCode: ErrorCode.errorLoadImage,
-                                errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
-                              ),
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _isFocusMode,
+            builder: (_, bool isFocus, Widget? child) {
+              return Stack(
+                children: [
+                  // 이미지 메인 화면
+                  MouseRegion(
+                    cursor: (isFocus)? SystemMouseCursors.none: MouseCursor.defer,
+                    child: child!
+                  ),
+                  // 화면 오버레이
+                  Visibility(
+                    visible: !isFocus, // 집중 모드 => 보이지 않게
+                    maintainState: true,
+                    // maintainAnimation: false,
+                    // maintainSize: false,
+                    child: ViewerActionOverlay(),
+                  ),
+                ],
+              );
+            },
+            child: RepaintBoundary(
+              child: GestureDetector(
+                onTap: _toggleFocusMode,
+                child: Center(
+                  child: InteractiveViewer(
+                    key: _viewerKey,
+                    transformationController: _transformController,
+                    clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
+                    trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
+                    // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
+                    // constrained: false,
+                    minScale: _minScale,
+                    maxScale: _maxScale,
+                    child: ListenableBuilder(
+                      listenable: model,
+                      builder: (BuildContext context, _) {
+                        final fileModel = FileModelProvider.of(context).model;
+                        // 새 이미지로 전환할 때마다 화면상태 초기화
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _zoomReset();
+                        });
+                        if (fileModel.file == null) {
+                          if (fileModel.errorCode == null) {
+                            return const CircularProgressIndicator();
+                          } else {
+                            return Center(child: ErrorTile(errorCode: fileModel.errorCode!));
+                          }
+                        } else {
+                          return Image(
+                            image: FileImage(fileModel.file!),
+                            loadingBuilder:(context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const CircularProgressIndicator();
+                            },
+                            errorBuilder: (context, error, stackTrace) => ErrorTile(
+                              errorCode: ErrorCode.errorLoadImage,
+                              errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // 화면 오버레이
-                    ValueListenableBuilder<bool>(
-                      valueListenable: _isFocusMode,
-                      builder: (_, isFocus, _) {
-                        return Visibility(
-                          visible: !isFocus, // 집중 모드 => 보이지 않게
-                          maintainState: true,
-                          // maintainAnimation: false,
-                          // maintainSize: false,
-                          child: ViewerActionOverlay(),
-                        );
+                          );
+                        }
                       },
                     ),
-                  ],
-                );
-              }
-            },
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
