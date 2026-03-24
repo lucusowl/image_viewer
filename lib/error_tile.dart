@@ -6,19 +6,21 @@ import 'package:image_viewer/model.dart';
 /// - `noFile` : 파일 없음
 /// - `notImage` : 파일이 이미지형식이 아님
 /// - `errorLoadImage` : 이미지를 띄우는 도중 문제 발생
+/// - `errorLoadFiles` : 파일목록을 가져오는 도중 문제 발생
 /// - `unknown` : 알 수 없는 오류
 enum ErrorCode {
   noPath,
   noFile,
   notImage,
   errorLoadImage,
+  errorLoadFiles,
   unknown,
 }
 
 /// 에러 대처 옵션 코드
 /// - `none` : 대처 없음
 /// - `newFile` : 새 파일 열기
-/// - `appRefresh` : 앱 재시작, TODO: 앱 재시작
+/// - `appRefresh` : 앱 재시작
 enum ErrorHandleOption {
   none,
   newFile,
@@ -73,6 +75,15 @@ class ErrorTile extends StatelessWidget {
         : "이미지를 띄우는 도중에 알 수 없는 원인으로 문제가 발생했습니다.\n새 파일을 선택해주세요.";
         errorHandleOption = ErrorHandleOption.newFile;
         break;
+      case ErrorCode.errorLoadFiles:
+        /// 파일 목록을 불러오는 도중 문제 발생
+        headText = "파일 목록을 불러오는 도중 문제 발생";
+        descriptionText = (errorMessage != null)
+        ? "$errorMessage\n새 파일을 선택해주세요."
+        : "갱신요청된 파일과 관련된 목록을 불러오는 도중 문제가 발생했습니다.\n새 파일을 선택해주세요.";
+        errorHandleOption = ErrorHandleOption.newFile;
+        break;
+      
       default:
         /// 알 수 없는 에러 = 표시할 에러가 없음
         headText = "앱 재시작 필요";
@@ -90,49 +101,50 @@ class ErrorTile extends StatelessWidget {
           children: [
             TextButton.icon(
               onPressed: FileModelProvider.of(context).model.pickFile,
-              icon: Icon(Icons.file_open),
-              label: Text("파일 선택")
+              icon: const Icon(Icons.file_open),
+              label: const Text("파일 선택")
             ),
             TextButton.icon(
               onPressed: FileModelProvider.of(context).model.pickDirectory,
-              icon: Icon(Icons.folder_open),
-              label: Text("폴더 선택")
+              icon: const Icon(Icons.folder_open),
+              label: const Text("폴더 선택")
             ),
           ],
         );
         break;
+      // TODO: 앱 재시작 기능
       default:
         errorHandleWidget = null;
     }
 
     return Center(
       child: Container(
-        constraints: BoxConstraints(maxWidth: 480.0),
+        constraints: const BoxConstraints(maxWidth: 480.0),
         decoration: BoxDecoration(
-          border: .all(color: Colors.amber),
-          // borderRadius: .circular(16.0)
+          border: .all(color: Theme.of(context).colorScheme.outlineVariant),
+          borderRadius: .circular(16.0)
         ),
-        margin: .symmetric(vertical: 64.0),
+        margin: const .symmetric(vertical: 64.0),
         child: Column(
           mainAxisSize: .min,
           children: [
             /// #1 제목 영역
             Container(
-              padding: .all(16.0),
+              padding: const .all(16.0),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
-                // borderRadius: .vertical(top: .circular(16.0)),
+                borderRadius: const .vertical(top: .circular(15.0)),
               ),
               child: Row(
                 spacing: 16.0,
                 children: [
-                  Icon(Icons.warning, size: 24.0, color: Colors.amber,),
+                  const Icon(Icons.warning, size: 24.0, color: Colors.amber,),
                   Expanded(child: Tooltip(
                     message: headText,
                     waitDuration: const Duration(milliseconds: 700),
                     child: Text(
                       headText,
-                      style: TextStyle(fontSize: 18.0),
+                      style: const TextStyle(fontSize: 18.0),
                       overflow: .ellipsis,
                       maxLines: 1,
                     ),
@@ -144,7 +156,7 @@ class ErrorTile extends StatelessWidget {
             /// #2-1 상세 내용 영역
             Flexible(
               child: SingleChildScrollView(
-                padding: .all(16.0),
+                padding: const .all(16.0),
                 child: Container(
                   width: double.infinity,
                   alignment: .topLeft,
@@ -155,8 +167,8 @@ class ErrorTile extends StatelessWidget {
 
             /// #2-2 행동 영역
             if (errorHandleWidget != null) Container(
-                decoration: BoxDecoration(
-                  // borderRadius: .vertical(bottom: .circular(16.0)),
+                decoration: const BoxDecoration(
+                  borderRadius: .vertical(bottom: .circular(15.0)),
                 ),
                 alignment: .topLeft,
                 child: SingleChildScrollView(

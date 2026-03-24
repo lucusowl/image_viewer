@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_viewer/model.dart';
@@ -9,36 +8,41 @@ class FileMoveIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fileModel = FileModelProvider.of(context).model;
-    return Stack(
-      children: [
-        // 이전 파일 이동 버튼
-        if (!fileModel.isFirst)
-          Align(
-            alignment: .centerLeft,
-            child: Padding(
-              padding: const .symmetric(horizontal: 16),
-              child: IconButton(
-                onPressed: Actions.handler<MoveToPreviousFileIntent>(context, MoveToPreviousFileIntent()),
-                icon: const Icon(Icons.arrow_back),
-                tooltip: "이전",
+    return ListenableBuilder(
+      listenable: FileModelProvider.of(context).model,
+      builder: (context, child) {
+        final fileModel = FileModelProvider.of(context).model;
+        return Stack(
+          children: [
+            // 이전 파일 이동 버튼
+            if (!fileModel.isFirst)
+              Align(
+                alignment: .centerLeft,
+                child: Padding(
+                  padding: const .symmetric(horizontal: 16),
+                  child: IconButton(
+                    onPressed: Actions.handler<MoveToPreviousFileIntent>(context, MoveToPreviousFileIntent()),
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: "이전",
+                  ),
+                )
               ),
-            )
-          ),
-        // 다음 파일 이동 버튼
-        if (!fileModel.isLast)
-          Align(
-            alignment: .centerRight,
-            child: Padding(
-              padding: const .symmetric(horizontal: 16),
-              child: IconButton(
-                onPressed: Actions.handler<MoveToNextFileIntent>(context, MoveToNextFileIntent()),
-                icon: const Icon(Icons.arrow_forward),
-                tooltip: "다음",
+            // 다음 파일 이동 버튼
+            if (!fileModel.isLast)
+              Align(
+                alignment: .centerRight,
+                child: Padding(
+                  padding: const .symmetric(horizontal: 16),
+                  child: IconButton(
+                    onPressed: Actions.handler<MoveToNextFileIntent>(context, MoveToNextFileIntent()),
+                    icon: const Icon(Icons.arrow_forward),
+                    tooltip: "다음",
+                  ),
+                )
               ),
-            )
-          ),
-      ],
+          ],
+        );
+      }
     );
   }
 }
@@ -61,7 +65,7 @@ class ViewerBottomPanel extends StatelessWidget {
               child: ListenableBuilder(
                 listenable: FileModelProvider.of(context).model,
                 builder: (BuildContext context, _) {
-                  return Text(FileModelProvider.of(context).model.file?.path.split(Platform.pathSeparator).last ?? "파일 없음");
+                  return Text(FileModelProvider.of(context).model.fileName ?? "파일 없음");
                 }
               ),
             ),
@@ -154,21 +158,21 @@ class ViewerActionOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: FileModelProvider.of(context).model.isReadyFileList,
-      builder:(_, bool isReady, Widget? child) {
+      builder:(_, bool isReady, Widget? viewerBottomPanel) {
         return Stack(
           children: [
             // 좌우 파일 이동 버튼
             // 파일목록이 갱신중이라면 미표시
             Visibility(
               visible: isReady,
-              child: FileMoveIndicator(),
+              child: const FileMoveIndicator(),
             ),
             // 하단 화면 조작 패널
-            child!,
+            viewerBottomPanel!,
           ],
         );
       },
-      child: ViewerBottomPanel(),
+      child: const ViewerBottomPanel(),
     );
   }
 }

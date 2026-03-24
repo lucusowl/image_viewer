@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:image_viewer/error_tile.dart';
 
+/// 파일 관리 객체
+/// `_errorCode`, `_currentFile`를 변경한 경우 `notifyListeners()`를 호출할 것
 class FileModel with ChangeNotifier {
   /// `FileModel`이 불러올 수 있는 이미지파일 확장자
   final List<String> _imageExtensions = const ["jpg", "jpeg", "png", "gif", "webp", "bmp", "wbmp", "ico", "cur"];
@@ -21,10 +23,12 @@ class FileModel with ChangeNotifier {
   /// 에러 코드
   ErrorCode? _errorCode;
 
-  /// `FileModel`의 현재 파일을 반환, 없을 경우 null
-  File? get file => _currentFile;
   /// `FileModel`의 현재 에러코드를 반환, 없을 경우 null
   ErrorCode? get errorCode => _errorCode;
+  /// `FileModel`의 현재 파일을 반환, 없을 경우 null
+  File? get file => _currentFile;
+  /// `FileModel`의 현재 파일이름을 반환, 없을 경우 null
+  String? get fileName => _currentFile?.path.split(Platform.pathSeparator).last;
   /// `FileModel`의 현재 파일이 파일 목록의 1번째인지 여부를 반환
   bool get isFirst => (_currentIndex == -1 || _currentIndex == 0);
   /// `FileModel`의 현재 파일이 파일 목록의 마지막인지 여부를 반환
@@ -37,11 +41,23 @@ class FileModel with ChangeNotifier {
     if (_currentFile != null) return;
     if (path == null) {
       _currentFile = null;
+      _currentDirectory = null;
       _errorCode = ErrorCode.noPath;
     } else {
       _currentFile = File(path).absolute;
+      _currentDirectory = _currentFile!.parent;
       _errorCode = null;
-      updateCurrentFileList();
+
+      updateCurrentFileList(() {
+        int tempIndex = 0;
+        for (File file in _currentFileList) {
+          if (file.path == _currentFile!.path) {
+            _currentIndex = tempIndex;
+            break;
+          }
+          tempIndex++;
+        }
+      });
     }
   }
 
@@ -65,7 +81,16 @@ class FileModel with ChangeNotifier {
     _errorCode = null;
     notifyListeners();
 
-    updateCurrentFileList();
+    updateCurrentFileList(() {
+      int tempIndex = 0;
+      for (File file in _currentFileList) {
+        if (file.path == _currentFile!.path) {
+          _currentIndex = tempIndex;
+          break;
+        }
+        tempIndex++;
+      }
+    });
     return true;
   }
 
@@ -76,11 +101,20 @@ class FileModel with ChangeNotifier {
     if (path == null) return false;
 
     _currentDirectory = Directory(path).absolute;
-    _currentFile = (await _currentDirectory?.list().first) as File;
+    _currentFile = null;
     _errorCode = null;
     notifyListeners();
 
-    updateCurrentFileList();
+    updateCurrentFileList(() {
+      // 적합한 파일이 없는 폴더의 경우
+      if (_currentFileList.isEmpty) {
+        _errorCode = ErrorCode.noFile;
+      } else {
+        _currentIndex = 0;
+        _currentFile = _currentFileList[0];
+        notifyListeners();
+      }
+    });
     return true;
   }
 
@@ -89,13 +123,12 @@ class FileModel with ChangeNotifier {
   ValueNotifier<bool> get isReadyFileList => _isReadyFileList;
   /// 파일 목록 갱신.
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
-  Future<void> updateCurrentFileList() async {
+  Future<void> updateCurrentFileList(void Function() onSuccess) async {
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
     _isReadyFileList.value = false;
 
-    int tempIndex = 0;
     _currentDirectory!.list().listen((FileSystemEntity entity) {
       // 파일이고 이미지확장자를 가진 경우 => 파일목록에 추가
       if (entity is! File) return; // 파일이 아닌 경우 무시
@@ -105,20 +138,23 @@ class FileModel with ChangeNotifier {
       String entityExtension = entityPath.substring(dotIndex+1).toLowerCase();
       if (_imageExtensions.contains(entityExtension)) {
         _currentFileList.add(entity.absolute);
-        if (entity.path == _currentFile!.path) {_currentIndex = tempIndex;}
-        tempIndex++;
       }
     },
     onDone: () {
+      // 파일명으로 오름차순 정렬
+      _currentFileList.sort((File f1, File f2) => f1.path.toLowerCase().compareTo(f2.path.toLowerCase()));
+      onSuccess();
       _isReadyFileList.value = true;
     },
     onError: (_) {
+      _errorCode = ErrorCode.errorLoadFiles;
       _isReadyFileList.value = false;
     });
   }
 
   /// 이전 파일로 갱신
   bool previousFile() {
+    if (_currentIndex == -1) return false;
     if (_currentIndex > 0) {
       _currentIndex--;
       _currentFile = _currentFileList[_currentIndex];
@@ -130,6 +166,7 @@ class FileModel with ChangeNotifier {
   }
   /// 다음 파일로 갱신
   bool nextFile() {
+    if (_currentIndex == -1) return false;
     if (_currentIndex < _currentFileList.length-1) {
       _currentIndex++;
       _currentFile = _currentFileList[_currentIndex];

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_viewer/error_tile.dart';
 import 'package:image_viewer/model.dart';
@@ -99,13 +100,13 @@ class _ViewPageState extends State<ViewPage> {
           autofocus: true,
           child: ValueListenableBuilder<bool>(
             valueListenable: _isFocusMode,
-            builder: (_, bool isFocus, Widget? child) {
+            builder: (_, bool isFocus, Widget? mainViewer) {
               return Stack(
                 children: [
                   // 이미지 메인 화면
                   MouseRegion(
                     cursor: (isFocus)? SystemMouseCursors.none: MouseCursor.defer,
-                    child: child!
+                    child: mainViewer!
                   ),
                   // 화면 오버레이
                   Visibility(
@@ -113,7 +114,7 @@ class _ViewPageState extends State<ViewPage> {
                     maintainState: true,
                     // maintainAnimation: false,
                     // maintainSize: false,
-                    child: ViewerActionOverlay(),
+                    child: const ViewerActionOverlay(),
                   ),
                 ],
               );
@@ -152,10 +153,32 @@ class _ViewPageState extends State<ViewPage> {
                               if (loadingProgress == null) return child;
                               return const CircularProgressIndicator();
                             },
-                            errorBuilder: (context, error, stackTrace) => ErrorTile(
-                              errorCode: ErrorCode.errorLoadImage,
-                              errorMessage: "${error.toString()}\n\n${stackTrace.toString()}",
-                            ),
+                            errorBuilder: (context, error, stackTrace) {
+                              /// TODO: View에서 로직분리 필요
+                              /// TODO: model._errorCode 재설정 필요
+                              /// 이미 불러온 목록에 대해 각각의 파일의 에러처리
+                              final String errorMessage = error.toString();
+                              debugPrint(errorMessage);
+                              /// 파일이 없는 경우
+                              if (error.runtimeType == PathNotFoundException) {
+                                return ErrorTile(
+                                  errorCode: ErrorCode.noFile,
+                                  errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                                );
+                              }
+                              /// 이미지 파일이 아닌 경우
+                              else if (errorMessage.contains("Invalid image data")) {
+                                return ErrorTile(
+                                  errorCode: ErrorCode.notImage,
+                                  errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                                );
+                              }
+                              /// 그 이외 오류의 경우
+                              return ErrorTile(
+                                errorCode: ErrorCode.errorLoadImage,
+                                errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                              );
+                            },
                           );
                         }
                       },
