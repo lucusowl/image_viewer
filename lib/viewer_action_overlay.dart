@@ -55,18 +55,23 @@ class ViewerBottomPanel extends StatelessWidget {
     return Align(
       alignment: .bottomCenter,
       child: Container(
-        padding: const .symmetric(vertical: 16),
+        padding: const .all(12.0),
         decoration: const BoxDecoration(color: Colors.black54),
         child: Row(
           mainAxisAlignment: .center,
           children: [
-            Padding(
-              padding: const .all(8.0),
-              child: ListenableBuilder(
-                listenable: FileModelProvider.of(context).model,
-                builder: (BuildContext context, _) {
-                  return Text(FileModelProvider.of(context).model.fileName ?? "파일 없음");
-                }
+            Flexible(
+              child: Padding(
+                padding: const .all(8.0),
+                child: SingleChildScrollView(
+                  scrollDirection: .horizontal,
+                  child: ListenableBuilder(
+                    listenable: FileModelProvider.of(context).model,
+                    builder: (BuildContext context, _) {
+                      return Text(FileModelProvider.of(context).model.fileName ?? "파일 없음", maxLines: 1,);
+                    }
+                  ),
+                ),
               ),
             ),
 
