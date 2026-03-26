@@ -109,11 +109,10 @@ class _ViewPageState extends State<ViewPage> {
                     child: mainViewer!
                   ),
                   // 화면 오버레이
+                  // 상태만 유지, 애니메이션,공간점유은 해제
                   Visibility(
                     visible: !isFocus, // 집중 모드 => 보이지 않게
                     maintainState: true,
-                    // maintainAnimation: false,
-                    // maintainSize: false,
                     child: const ViewerActionOverlay(),
                   ),
                 ],
@@ -122,66 +121,68 @@ class _ViewPageState extends State<ViewPage> {
             child: RepaintBoundary(
               child: GestureDetector(
                 onTap: _toggleFocusMode,
-                child: Center(
-                  child: InteractiveViewer(
+                child: LayoutBuilder(
+                  builder: (_, BoxConstraints constraints) => InteractiveViewer(
                     key: _viewerKey,
                     transformationController: _transformController,
-                    clipBehavior: .none, // 확대하여도 viewport를 벗어나는 부분이 clop되지 않게
-                    trackpadScrollCausesScale: true, // 노트북을 사용하는 경우
-                    // boundaryMargin: .all(double.infinity), // viewport 벗어나서 pan 가능하게
-                    // constrained: false,
+                    trackpadScrollCausesScale: true,
+                    constrained: false, // Viewer 크기를 화면크기에 맞춤
                     minScale: _minScale,
                     maxScale: _maxScale,
-                    child: ListenableBuilder(
-                      listenable: model,
-                      builder: (BuildContext context, _) {
-                        final fileModel = FileModelProvider.of(context).model;
-                        // 새 이미지로 전환할 때마다 화면상태 초기화
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _zoomReset();
-                        });
-                        if (fileModel.file == null) {
-                          if (fileModel.errorCode == null) {
-                            return const CircularProgressIndicator();
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      child: ListenableBuilder(
+                        listenable: model,
+                        builder: (BuildContext context, _) {
+                          final fileModel = FileModelProvider.of(context).model;
+                          // 새 이미지로 전환할 때마다 화면상태 초기화
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _zoomReset();
+                          });
+                          if (fileModel.file == null) {
+                            if (fileModel.errorCode == null) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else {
+                              return Center(child: ErrorTile(errorCode: fileModel.errorCode!));
+                            }
                           } else {
-                            return Center(child: ErrorTile(errorCode: fileModel.errorCode!));
+                            return Image(
+                              image: FileImage(fileModel.file!),
+                              loadingBuilder:(context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const CircularProgressIndicator();
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                /// TODO: View에서 로직분리 필요
+                                /// TODO: model._errorCode 재설정 필요
+                                /// 이미 불러온 목록에 대해 각각의 파일의 에러처리
+                                final String errorMessage = error.toString();
+                                debugPrint(errorMessage);
+                                /// 파일이 없는 경우
+                                if (error.runtimeType == PathNotFoundException) {
+                                  return ErrorTile(
+                                    errorCode: ErrorCode.noFile,
+                                    errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                                  );
+                                }
+                                /// 이미지 파일이 아닌 경우
+                                else if (errorMessage.contains("Invalid image data")) {
+                                  return ErrorTile(
+                                    errorCode: ErrorCode.notImage,
+                                    errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                                  );
+                                }
+                                /// 그 이외 오류의 경우
+                                return ErrorTile(
+                                  errorCode: ErrorCode.errorLoadImage,
+                                  errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
+                                );
+                              },
+                            );
                           }
-                        } else {
-                          return Image(
-                            image: FileImage(fileModel.file!),
-                            loadingBuilder:(context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const CircularProgressIndicator();
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              /// TODO: View에서 로직분리 필요
-                              /// TODO: model._errorCode 재설정 필요
-                              /// 이미 불러온 목록에 대해 각각의 파일의 에러처리
-                              final String errorMessage = error.toString();
-                              debugPrint(errorMessage);
-                              /// 파일이 없는 경우
-                              if (error.runtimeType == PathNotFoundException) {
-                                return ErrorTile(
-                                  errorCode: ErrorCode.noFile,
-                                  errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
-                                );
-                              }
-                              /// 이미지 파일이 아닌 경우
-                              else if (errorMessage.contains("Invalid image data")) {
-                                return ErrorTile(
-                                  errorCode: ErrorCode.notImage,
-                                  errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
-                                );
-                              }
-                              /// 그 이외 오류의 경우
-                              return ErrorTile(
-                                errorCode: ErrorCode.errorLoadImage,
-                                errorMessage: "$errorMessage\n\n${stackTrace.toString()}",
-                              );
-                            },
-                          );
-                        }
-                      },
+                        },
+                      ),
                     ),
                   ),
                 ),
