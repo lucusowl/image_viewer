@@ -43,7 +43,7 @@ class _ViewPageState extends State<ViewPage> {
 
     final Matrix4 newMatrix = currentMatrix.clone()
       ..translateByDouble(sceneCenter[0], sceneCenter[1], 0.0, 1.0)
-      ..scaleByDouble(targetScale, targetScale, 1.0, 1.0)
+      ..scaleByDouble(targetScale, targetScale, targetScale, 1.0)
       ..translateByDouble(-sceneCenter[0], -sceneCenter[1], 0.0, 1.0);
 
     _transformController.value = newMatrix;
