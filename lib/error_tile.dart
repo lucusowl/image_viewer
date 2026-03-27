@@ -119,65 +119,70 @@ class ErrorTile extends StatelessWidget {
 
     return Center(
       child: Container(
+        // 내용이 많아질 경우 대비
+        // - 너비 제한
+        // - 상하 마진 제한 -> 내부 스크롤 동작
         constraints: const BoxConstraints(maxWidth: 480.0),
-        decoration: BoxDecoration(
-          border: .all(color: Theme.of(context).colorScheme.outlineVariant),
-          borderRadius: .circular(16.0)
-        ),
         margin: const .symmetric(vertical: 64.0),
-        child: Column(
-          mainAxisSize: .min,
-          children: [
-            /// #1 제목 영역
-            Container(
-              padding: const .all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: const .vertical(top: .circular(15.0)),
-              ),
-              child: Row(
-                spacing: 16.0,
-                children: [
-                  const Icon(Icons.warning, size: 24.0, color: Colors.amber,),
-                  Expanded(child: Tooltip(
-                    message: headText,
-                    waitDuration: const Duration(milliseconds: 700),
-                    child: Text(
-                      headText,
-                      style: const TextStyle(fontSize: 18.0),
-                      overflow: .ellipsis,
-                      maxLines: 1,
-                    ),
-                  )),
-                ],
-              ),
-            ),
-
-            /// #2-1 상세 내용 영역
-            Flexible(
-              child: SingleChildScrollView(
+        child: Material(
+          // 배경색
+          color: Theme.of(context).colorScheme.surface,
+          // 레이어 테두리
+          shape: RoundedRectangleBorder(
+            borderRadius: .circular(16.0),
+            side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          ),
+          clipBehavior: .hardEdge,
+          child: Column(
+            mainAxisSize: .min,
+            children: [
+              /// #1 제목 영역
+              Container(
                 padding: const .all(16.0),
-                child: Container(
-                  width: double.infinity,
-                  alignment: .topLeft,
-                  child: Text(descriptionText),
-                )
-              ),
-            ),
-
-            /// #2-2 행동 영역
-            if (errorHandleWidget != null) Container(
-                decoration: const BoxDecoration(
-                  borderRadius: .vertical(bottom: .circular(15.0)),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                 ),
-                alignment: .topLeft,
-                child: SingleChildScrollView(
-                  padding: .fromLTRB(16.0, 0.0, 16.0, 16.0),
-                  scrollDirection: .horizontal,
-                  child: errorHandleWidget
-                )
+                child: Row(
+                  spacing: 16.0,
+                  children: [
+                    const Icon(Icons.warning, size: 24.0, color: Colors.amber,),
+                    Expanded(child: Tooltip(
+                      message: headText,
+                      waitDuration: const Duration(milliseconds: 700),
+                      child: Text(
+                        headText,
+                        style: const TextStyle(fontSize: 18.0),
+                        overflow: .ellipsis,
+                        maxLines: 1,
+                      ),
+                    )),
+                  ],
+                ),
               ),
-          ],
+
+              /// #2-1 상세 내용 영역
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const .all(16.0),
+                  child: Container(
+                    width: double.infinity,
+                    alignment: .topLeft,
+                    child: Text(descriptionText),
+                  )
+                ),
+              ),
+
+              /// #2-2 행동 영역
+              if (errorHandleWidget != null) Container(
+                  alignment: .topLeft,
+                  child: SingleChildScrollView(
+                    padding: .fromLTRB(16.0, 0.0, 16.0, 16.0),
+                    scrollDirection: .horizontal,
+                    child: errorHandleWidget
+                  )
+                ),
+            ],
+          ),
         ),
       ),
     );
