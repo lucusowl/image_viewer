@@ -54,8 +54,12 @@ class _ViewPageState extends State<ViewPage> {
     // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
     const double targetScale = 2.0;
-    if (_transformController.value.getMaxScaleOnAxis() * targetScale <= _maxScale) {
+    final double currentScale = _transformController.value.getMaxScaleOnAxis();
+    if (currentScale >= _maxScale) return;
+    if (currentScale * targetScale <= _maxScale) {
       _zoomByScale(targetScale);
+    } else {
+      _zoomByScale(_maxScale / currentScale);
     }
   }
 
@@ -64,8 +68,12 @@ class _ViewPageState extends State<ViewPage> {
     // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
     const double targetScale = 0.5;
-    if (_transformController.value.getMaxScaleOnAxis() * targetScale >= _minScale) {
+    final double currentScale = _transformController.value.getMaxScaleOnAxis();
+    if (currentScale <= _minScale) return;
+    if (currentScale * targetScale >= _minScale) {
       _zoomByScale(targetScale);
+    } else {
+      _zoomByScale(_minScale / currentScale);
     }
   }
 
