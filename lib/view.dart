@@ -134,7 +134,10 @@ class _ViewPageState extends State<ViewPage> {
                     key: _viewerKey,
                     transformationController: _transformController,
                     trackpadScrollCausesScale: true,
-                    constrained: false, // Viewer 크기를 화면크기에 맞춤
+                    // Viewer 크기를 화면크기에 맞춤
+                    constrained: false,
+                    // 화면크기만큼 여백
+                    boundaryMargin: .symmetric(horizontal: constraints.maxWidth, vertical: constraints.maxHeight),
                     minScale: _minScale,
                     maxScale: _maxScale,
                     child: SizedBox(
@@ -152,7 +155,7 @@ class _ViewPageState extends State<ViewPage> {
                             if (fileModel.errorCode == null) {
                               return const Center(child: CircularProgressIndicator());
                             } else {
-                              return Center(child: ErrorTile(errorCode: fileModel.errorCode!));
+                              return ErrorTile(errorCode: fileModel.errorCode!);
                             }
                           } else {
                             return Image(
