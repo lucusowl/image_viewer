@@ -48,7 +48,7 @@ class FileModel with ChangeNotifier {
       _currentDirectory = _currentFile!.parent;
       _errorCode = null;
 
-      updateCurrentFileList(() {
+      updateCurrentFileList(onSuccess: () {
         int tempIndex = 0;
         for (File file in _currentFileList) {
           if (file.path == _currentFile!.path) {
@@ -76,12 +76,18 @@ class FileModel with ChangeNotifier {
     final XFile? file = await openFile(acceptedTypeGroups: [imageTypeGroup, allTypeGroup]);
     if (file == null) return false;
 
+    // 캐시 비우기
+    final ImageCache imageCache = PaintingBinding.instance.imageCache;
+    imageCache.clear(); // 모든 캐시 해제
+    imageCache.clearLiveImages(); // 화면에 표시된 캐시참조도 해제
+
     _currentFile = File(file.path).absolute;
     _currentDirectory = _currentFile!.parent;
     _errorCode = null;
+
     notifyListeners();
 
-    updateCurrentFileList(() {
+    updateCurrentFileList(onSuccess: () {
       int tempIndex = 0;
       for (File file in _currentFileList) {
         if (file.path == _currentFile!.path) {
@@ -100,12 +106,18 @@ class FileModel with ChangeNotifier {
     final String? path = await getDirectoryPath();
     if (path == null) return false;
 
+    final ImageCache imageCache = PaintingBinding.instance.imageCache;
+    imageCache.clear(); // 모든 캐시 해제
+    imageCache.clearLiveImages(); // 화면에 표시된 캐시참조도 해제
+
     _currentDirectory = Directory(path).absolute;
     _currentFile = null;
     _errorCode = null;
+
     notifyListeners();
 
-    updateCurrentFileList(() {
+    // 캐시 비우기
+    updateCurrentFileList(onSuccess: () {
       // 적합한 파일이 없는 폴더의 경우
       if (_currentFileList.isEmpty) {
         _errorCode = ErrorCode.noFile;
@@ -123,7 +135,9 @@ class FileModel with ChangeNotifier {
   ValueNotifier<bool> get isReadyFileList => _isReadyFileList;
   /// 파일 목록 갱신.
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
-  Future<void> updateCurrentFileList(void Function() onSuccess) async {
+  /// - [onSuccess]: 갱신을 성공적으로 완료한 이후 callback
+  /// - [onError]: 갱신 도중 에러가 발생한 이루 callback, 에러객체 인자 전달됨
+  Future<void> updateCurrentFileList({void Function()? onSuccess, void Function(Object)? onError}) async {
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
@@ -143,11 +157,12 @@ class FileModel with ChangeNotifier {
     onDone: () {
       // 파일명으로 오름차순 정렬
       _currentFileList.sort((File f1, File f2) => f1.path.toLowerCase().compareTo(f2.path.toLowerCase()));
-      onSuccess();
+      if (onSuccess != null) onSuccess();
       _isReadyFileList.value = true;
     },
-    onError: (_) {
+    onError: (Object error) {
       _errorCode = ErrorCode.errorLoadFiles;
+      if (onError != null) onError(error);
       _isReadyFileList.value = false;
     });
   }
