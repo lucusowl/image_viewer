@@ -90,7 +90,7 @@ class DialogTile extends StatelessWidget {
 /// 선택(확인 또는 취소) 팝업 모달을 열고 확인여부를 반환
 /// - [icon]: 모달 상단과 확인 버튼 아이콘
 /// - [title]: 모달 상단 제목 문구
-/// - [body]: 모달 중앙 상세 설면 문구
+/// - [body]: 모달 중앙 상세설명 문구
 /// - [confirmButtonLabel]: (선택) 확인 버튼 표시문자, 기본값: "확인"
 Future<bool> openConfirmModal(
   BuildContext buildContext,
@@ -118,5 +118,34 @@ Future<bool> openConfirmModal(
             onPressed: () {Navigator.of(context).pop();},
             icon: const Icon(Icons.cancel),
             label: const Text("취소"),),),],),),);
+  return (true == isDeleted);
+}
+
+/// 경고(확인만) 팝업 모달을 열기.
+/// 확인 버튼을 누른 경우를 반환.
+/// - [icon]: 모달 상단과 확인 버튼 아이콘
+/// - [title]: 모달 상단 제목 문구
+/// - [body]: 모달 중앙 상세설명 문구
+Future<bool> openAlertModal(
+  BuildContext buildContext,
+  IconData icon,
+  String title,
+  String body
+) async {
+  final isDeleted = await showDialog(
+    context: buildContext,
+    builder:(BuildContext context) => Dialog(
+      constraints: const BoxConstraints(maxWidth: 360.0),
+      child: DialogTile(
+        type: DialogType.confirmPopup,
+        titleText: title,
+        titleIcon: icon,
+        bodyText: body,
+        bottomActionWidgets: [
+          Expanded(child: TextButton.icon(
+            onPressed: () {Navigator.of(context).pop(true);},
+            icon: Icon(icon),
+            label: const Text("확인"),
+            autofocus: true,),),],),),);
   return (true == isDeleted);
 }

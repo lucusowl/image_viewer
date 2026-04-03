@@ -53,6 +53,12 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
     // 경고를 띄울 수 없다면 비활성화
     if (context == null || context.mounted != true) return false;
 
+    // 파일 없음 => 경고 모달 열기
+    if (model.file == null) {
+      await openAlertModal(context, Icons.warning, "파일 없음", "삭제할 파일이 없습니다.");
+      return true;
+    }
+
     // 삭제 전 확인
     final bool isDeleted = await openConfirmModal(context,
       Icons.delete_forever,
@@ -74,6 +80,12 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
     final BuildContext? context = FocusManager.instance.primaryFocus?.context;
     // 경고를 띄울 수 없다면 비활성화
     if (context == null || context.mounted != true) return false;
+
+    // 파일 없음 => 경고 모달 열기
+    if (model.file == null) {
+      await openAlertModal(context, Icons.warning, "파일 없음", "제거할 파일이 없습니다.");
+      return true;
+    }
 
     // 제거 전 확인
     final bool isDeleted = await openConfirmModal(context,
