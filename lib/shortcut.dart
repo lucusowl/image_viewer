@@ -42,6 +42,15 @@ class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
 
+/// 현재 이미지캐시를 다른 이름 파일로 저장 용도
+class SaveAsFileIntent extends Intent {const SaveAsFileIntent();}
+class SaveAsFileAction extends Action<SaveAsFileIntent> {
+  SaveAsFileAction(this.model);
+  final FileModel model;
+  @override
+  Future<bool> invoke(covariant SaveAsFileIntent intent) => model.saveAsFile();
+}
+
 /// 현재 파일을 삭제 용도
 class DeleteFileIntent extends Intent {const DeleteFileIntent();}
 class DeleteFileAction extends Action<DeleteFileIntent> {
@@ -187,6 +196,8 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
         /// 새 폴더 열기: `Ctrl + o`
         SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
+        /// 다른 이름으로 저장: `Ctrl + s`
+        SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveAsFileIntent(),
         /// 현재 파일 삭제: `Shift + DEL`
         SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
         /// 현재 파일을 목록에서 제거: `DEL`

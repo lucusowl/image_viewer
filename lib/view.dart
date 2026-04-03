@@ -113,6 +113,7 @@ class _ViewPageState extends State<ViewPage> {
           OpenNewDirectoryIntent: OpenNewDirectoryAction(model),
           MoveToPreviousFileIntent: MoveToPreviousFileAction(model),
           MoveToNextFileIntent: MoveToNextFileAction(model),
+          SaveAsFileIntent: SaveAsFileAction(model),
           DeleteFileIntent: DeleteFileAction(model),
           RemoveFileInListIntent: RemoveFileInListAction(model),
           ResetViewerIntent: ResetViewerAction(_zoomReset),

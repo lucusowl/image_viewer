@@ -111,12 +111,21 @@ class ViewerBottomPanel extends StatelessWidget {
                 //   leadingIcon: const Icon(Icons.palette, size: 18.0),
                 //   child: const Text("그림판으로 열기"),
                 // ),
-                // MenuItemButton(
-                //   // onPressed: Actions.handler<T>(context, T()),
-                //   shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
-                //   leadingIcon: const Icon(Icons.save, size: 18.0),
-                //   child: const Text("다른 이름으로 저장"),
-                // ),
+                MenuItemButton(
+                  onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
+                  leadingIcon: const Icon(Icons.save, size: 18.0),
+                  child: Row(
+                    spacing: 3.0,
+                    children: [
+                      const Text("다른 이름으로 저장"),
+                      const Tooltip(
+                        message: "파일을 복사하지 않고\n디코딩된 이미지 캐시를 PNG파일로 저장합니다.",
+                        child: Icon(Icons.info_outline, size: 15.0),
+                      ),
+                    ],
+                  ),
+                ),
                 MenuItemButton(
                   onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent()),
                   shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),

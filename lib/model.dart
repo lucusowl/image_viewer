@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
@@ -9,6 +11,16 @@ import 'package:image_viewer/error_tile.dart';
 class FileModel with ChangeNotifier {
   /// `FileModel`이 불러올 수 있는 이미지파일 확장자
   final List<String> _imageExtensions = const ["jpg", "jpeg", "png", "gif", "webp", "bmp", "wbmp", "ico", "cur"];
+  List<XTypeGroup> get _acceptedTypeGroups => [
+    // 허용된 이미지 파일 그룹
+    XTypeGroup(
+      label: "Images",
+      extensions: _imageExtensions,
+      mimeTypes: ["image/*"]
+    ),
+    // 모든 파일 그룹
+    XTypeGroup(label: "All Files"),
+  ];
 
   /// 현재 파일
   File? _currentFile;
@@ -35,6 +47,7 @@ class FileModel with ChangeNotifier {
   bool get isLast => (_currentIndex == -1 || _currentIndex == _currentFileList.length-1);
 
   /// 현재 파일을 갱신
+  ///
   /// 재빌드 요청없이 진행용도로 사용할 것. (최초 빌드)
   /// 이미 설정된 파일이 있을 경우 무시됨.
   void initFile(String? path) {
@@ -62,18 +75,10 @@ class FileModel with ChangeNotifier {
   }
 
   /// 갱신할 파일을 선택
+  ///
   /// 갱신할 파일이 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickFile() async {
-    // 허용된 이미지 파일그룹
-    XTypeGroup imageTypeGroup = XTypeGroup(
-      label: "Images",
-      extensions: _imageExtensions,
-      mimeTypes: ["image/*"]
-    );
-    // 모든 파일 그룹
-    const XTypeGroup allTypeGroup = XTypeGroup(label: "All Files");
-
-    final XFile? file = await openFile(acceptedTypeGroups: [imageTypeGroup, allTypeGroup]);
+    final XFile? file = await openFile(acceptedTypeGroups: _acceptedTypeGroups);
     if (file == null) return false;
 
     // 캐시 비우기
@@ -101,6 +106,7 @@ class FileModel with ChangeNotifier {
   }
 
   /// 갱신할 폴더 선택
+  ///
   /// 갱신할 폴더가 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickDirectory() async {
     final String? path = await getDirectoryPath();
@@ -133,11 +139,15 @@ class FileModel with ChangeNotifier {
   /// 파일 목록 변경 알림자
   final ValueNotifier<bool> _isReadyFileList = ValueNotifier<bool>(false);
   ValueNotifier<bool> get isReadyFileList => _isReadyFileList;
-  /// 파일 목록 갱신.
+  /// 파일 목록 갱신
+  ///
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
   /// - [onSuccess]: 갱신을 성공적으로 완료한 이후 callback
   /// - [onError]: 갱신 도중 에러가 발생한 이루 callback, 에러객체 인자 전달됨
   Future<void> updateCurrentFileList({void Function()? onSuccess, void Function(Object)? onError}) async {
+    /// TODO: 갱신 처리가 시작 알림
+    /// (파일개수가 많을 경우 오래 걸림)
+
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
@@ -159,12 +169,61 @@ class FileModel with ChangeNotifier {
       _currentFileList.sort((File f1, File f2) => f1.path.toLowerCase().compareTo(f2.path.toLowerCase()));
       if (onSuccess != null) onSuccess();
       _isReadyFileList.value = true;
+      /// TODO: 갱신이 완료 알림
     },
     onError: (Object error) {
       _errorCode = ErrorCode.errorLoadFiles;
       if (onError != null) onError(error);
       _isReadyFileList.value = false;
+      /// TODO: 갱신 도중 문제가 발생 알림
     });
+  }
+
+  /// 현재 이미지캐시를 다른 이름 파일로 저장
+  ///
+  /// 파일을 복사하는 방식이 아닌 캐시에 디코딩된 데이터를 파일로 저장하는 방식.
+  /// 때문에 파일을 삭제또는 변경 후 캐시에 있는 파일데이터 복원하는 용도로 활용가능.
+  Future<bool> saveAsFile() async {
+    /// 현재 파일이 지정되어 있는지 확인
+    if (_currentFile == null) return false;
+    if (_currentDirectory == null) return false;
+
+    /// 저장할 파일 경로 받아오기
+    /// 파일명 뒤에 '-copy'추가, 확장자는 '.png' 권장
+    final String suggestedName = fileName!.replaceRange(fileName!.lastIndexOf('.'), null, '-copy.png');
+    final FileSaveLocation? savePath = await getSaveLocation(
+      acceptedTypeGroups: _acceptedTypeGroups,
+      initialDirectory: _currentDirectory!.path,
+      suggestedName: suggestedName);
+    if (savePath == null) return false;
+
+    /// TODO: 저장 처리가 시작 알림
+    /// (용량이 큰 파일일 경우 오래 걸림)
+    try {
+
+      /// ImageProvider로부터 이미지로드 스트림 생성
+      final ImageStream stream = FileImage(_currentFile!).resolve(.empty);
+      final Completer<ui.Image> completer = Completer<ui.Image>();
+
+      late ImageStreamListener listener;
+      listener = ImageStreamListener((ImageInfo info, bool synchronousCall) {
+        completer.complete(info.image);
+        stream.removeListener(listener);
+      });
+      stream.addListener(listener);
+      final ui.Image image = await completer.future;
+
+      /// png 포멧으로 파일을 저장
+      /// 무손실 포멧, 디코딩된 캐시데이터를 그대로 파일로 저장
+      ByteData? byteData = await image.toByteData(format: .png);
+      if (byteData == null) return false;
+      await File(savePath.path).writeAsBytes(byteData.buffer.asUint8List());
+      /// TODO: 저장이 완료 알림
+      return true;
+    } catch (e) {
+      /// TODO: 저장 도중 문제가 발생 알림
+      return false;
+    }
   }
 
   /// 현재 파일을 파일 목록에서 제거
@@ -200,15 +259,15 @@ class FileModel with ChangeNotifier {
   /// 현재 파일을 삭제
   Future<bool> deleteFile() async {
     if (_currentFile == null) return false;
-    /// TODO: 대기 상태로 빌드:
-    /// 삭제 처리가 시작되었음을 알림 (용량이 큰 파일일 경우 오래 걸림)
+    /// TODO: 삭제 처리가 시작 알림
+    /// (용량이 큰 파일일 경우 오래 걸림)
     try {
       /// 파일 삭제
       await _currentFile?.delete(); // 영구삭제
       /// 현재 파일을 목록에서 제외
       return await removeFileFromCurrentFileList();
     } catch (e) {
-      /// TODO: 제거 도중 문제가 발생했음을 알림
+      /// TODO: 제거 도중 문제가 발생 알림
       return false;
     }
   }
