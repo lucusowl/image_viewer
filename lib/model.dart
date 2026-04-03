@@ -124,8 +124,8 @@ class FileModel with ChangeNotifier {
       } else {
         _currentIndex = 0;
         _currentFile = _currentFileList[0];
-        notifyListeners();
       }
+      notifyListeners();
     });
     return true;
   }
@@ -165,6 +165,36 @@ class FileModel with ChangeNotifier {
       if (onError != null) onError(error);
       _isReadyFileList.value = false;
     });
+  }
+
+  /// 현재 파일을 파일 목록에서 제거
+  Future<bool> removeFileFromCurrentFileList() async {
+    if (_currentFile == null) return false;
+
+    /// 캐시 삭제
+    await FileImage(_currentFile!).evict();
+
+    /// 현 파일 갱신 및 목록에서 삭제
+    final int lengthOfFileList = _currentFileList.length;
+    if (lengthOfFileList == 1) {
+      // 파일목록에 삭제할 파일만 있을 경우
+      _currentFileList.removeAt(_currentIndex);
+      _currentIndex = -1;
+      _currentFile = null;
+      _errorCode = .noFile;
+    } else {
+      if (lengthOfFileList == _currentIndex + 1) {
+        // 맨 뒤에 해당할 경우
+        _currentFile = _currentFileList[_currentIndex-1];
+        _currentFileList.removeAt(_currentIndex);
+        _currentIndex--;
+      } else {
+        _currentFile = _currentFileList[_currentIndex+1];
+        _currentFileList.removeAt(_currentIndex);
+      }
+    }
+    notifyListeners();
+    return true;
   }
 
   /// 이전 파일로 갱신

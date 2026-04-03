@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_viewer/dialog_tile.dart';
 import 'package:image_viewer/model.dart';
 
 /// Actions & Intents 정의 영역
@@ -39,6 +40,28 @@ class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   final FileModel model;
   @override
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
+}
+
+/// 현재 파일을 목록에서 제거 용도
+class RemoveFileInListIntent extends Intent {const RemoveFileInListIntent();}
+class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
+  RemoveFileInListAction(this.model);
+  final FileModel model;
+  @override
+  Future<bool> invoke(covariant RemoveFileInListIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 제거 전 확인
+    final bool isDeleted = await openConfirmModal(context,
+      Icons.delete,
+      "주의: 목록에서 파일 제거",
+      "현재 목록에서 이 파일을 완전히 제거합니다.\n파일을 제거하기 전 확인합니다.",
+      "제거");
+    if (!isDeleted) return false;
+    return await model.removeFileFromCurrentFileList(); // 제거 수행 및 결과 반환
+  }
 }
 
 /// 화면 맞추기 용도
@@ -130,6 +153,10 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
         /// 새 폴더 열기: `Ctrl + o`
         SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
+        /// 현재 파일 삭제: `Shift + DEL`
+        // SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
+        /// 현재 파일을 목록에서 제거: `DEL`
+        SingleActivator(LogicalKeyboardKey.delete): RemoveFileInListIntent(),
         /// 화면 초기화: `space`
         SingleActivator(LogicalKeyboardKey.space): ResetViewerIntent(),
         /// 화면 확대: `+` 또는 확대키

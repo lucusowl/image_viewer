@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_viewer/model.dart';
+import 'package:image_viewer/dialog_tile.dart';
+import 'package:image_viewer/shortcut.dart';
 
 /// 에러 코드
 /// - `noPath` : 경로 없음
@@ -40,7 +41,7 @@ class ErrorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     String headText;
     String descriptionText = '';
-    ErrorHandleOption errorHandleOption = ErrorHandleOption.none;
+    ErrorHandleOption errorHandleOption = .none;
 
     switch (errorCode) {
       case ErrorCode.noPath:
@@ -49,7 +50,7 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n새 파일을 선택해주세요."
         : "파일의 경로를 받지 못했습니다.\n새 파일을 선택해주세요.";
-        errorHandleOption = ErrorHandleOption.newFile;
+        errorHandleOption = .newFile;
         break;
       case ErrorCode.noFile:
         /// 요청한 파일이 없음
@@ -57,7 +58,7 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n새 파일을 선택해주세요."
         : "지정한 파일이 존재하지 않습니다.\n새 파일을 선택해주세요.";
-        errorHandleOption = ErrorHandleOption.newFile;
+        errorHandleOption = .newFile;
         break;
       case ErrorCode.notImage:
         /// 요청한 파일이 이미지가 아님
@@ -65,7 +66,7 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n새 파일을 선택해주세요."
         : "지정한 파일이 이미지 형식의 파일이 아닙니다.\n이미지 형식인 새 파일을 선택해주세요.";
-        errorHandleOption = ErrorHandleOption.newFile;
+        errorHandleOption = .newFile;
         break;
       case ErrorCode.errorLoadImage:
         /// 요청한 이미지를 띄우는 도중 문제 발생
@@ -73,7 +74,7 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n새 파일을 선택해주세요."
         : "이미지를 띄우는 도중에 알 수 없는 원인으로 문제가 발생했습니다.\n새 파일을 선택해주세요.";
-        errorHandleOption = ErrorHandleOption.newFile;
+        errorHandleOption = .newFile;
         break;
       case ErrorCode.errorLoadFiles:
         /// 파일 목록을 불러오는 도중 문제 발생
@@ -81,7 +82,7 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n새 파일을 선택해주세요."
         : "갱신요청된 파일과 관련된 목록을 불러오는 도중 문제가 발생했습니다.\n새 파일을 선택해주세요.";
-        errorHandleOption = ErrorHandleOption.newFile;
+        errorHandleOption = .newFile;
         break;
       
       default:
@@ -90,32 +91,30 @@ class ErrorTile extends StatelessWidget {
         descriptionText = (errorMessage != null)
         ? "$errorMessage\n앱을 재시작 해주세요."
         : "예상치 못한 에러가 발생했습니다.\n앱을 재시작 해주세요.";
-        errorHandleOption = ErrorHandleOption.appRefresh;
+        errorHandleOption = .appRefresh;
     }
 
-    Widget? errorHandleWidget;
-    switch (errorHandleOption) {
-      case ErrorHandleOption.newFile:
-        errorHandleWidget = Row(
-          spacing: 8.0,
-          children: [
-            TextButton.icon(
-              onPressed: FileModelProvider.of(context).model.pickFile,
-              icon: const Icon(Icons.file_open),
-              label: const Text("파일 선택")
-            ),
-            TextButton.icon(
-              onPressed: FileModelProvider.of(context).model.pickDirectory,
-              icon: const Icon(Icons.folder_open),
-              label: const Text("폴더 선택")
-            ),
-          ],
-        );
-        break;
-      // TODO: 앱 재시작 기능
-      default:
-        errorHandleWidget = null;
-    }
+    List<Widget> errorHandleWidget = switch (errorHandleOption) {
+      // 새 파일 선택 처리
+      .newFile => [
+        TextButton.icon(
+          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
+          icon: const Icon(Icons.file_open),
+          label: const Text("파일 선택")
+        ),
+        TextButton.icon(
+          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+          icon: const Icon(Icons.folder_open),
+          label: const Text("폴더 선택")
+        ),
+      ],
+
+      // TODO: 앱 재시작 처리
+      .appRefresh => [],
+
+      // 그 이외 에러처리 = Action없음
+      _ => [],
+    };
 
     return Center(
       child: Container(
@@ -124,67 +123,10 @@ class ErrorTile extends StatelessWidget {
         // - 상하 마진 제한 -> 내부 스크롤 동작
         constraints: const BoxConstraints(maxWidth: 480.0),
         margin: const .symmetric(vertical: 64.0),
-        child: Material(
-          // 배경색
-          color: Theme.of(context).colorScheme.surface,
-          // 레이어 테두리
-          shape: RoundedRectangleBorder(
-            borderRadius: .circular(16.0),
-            side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-          ),
-          clipBehavior: .hardEdge,
-          child: Column(
-            mainAxisSize: .min,
-            children: [
-              /// #1 제목 영역
-              Container(
-                padding: const .all(16.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                ),
-                child: Row(
-                  spacing: 16.0,
-                  children: [
-                    const Icon(Icons.warning, size: 24.0, color: Colors.amber,),
-                    Expanded(child: Tooltip(
-                      message: headText,
-                      waitDuration: const Duration(milliseconds: 700),
-                      child: Text(
-                        headText,
-                        style: const TextStyle(fontSize: 18.0),
-                        overflow: .ellipsis,
-                        maxLines: 1,
-                      ),
-                    )),
-                  ],
-                ),
-              ),
-
-              /// #2-1 상세 내용 영역
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const .all(16.0),
-                  child: Container(
-                    width: double.infinity,
-                    alignment: .topLeft,
-                    child: Text(descriptionText),
-                  )
-                ),
-              ),
-
-              /// #2-2 행동 영역
-              if (errorHandleWidget != null) Container(
-                  alignment: .topLeft,
-                  child: SingleChildScrollView(
-                    padding: .fromLTRB(16.0, 0.0, 16.0, 16.0),
-                    scrollDirection: .horizontal,
-                    child: errorHandleWidget
-                  )
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
+        child: DialogTile(
+          type: .normal,
+          titleText: headText,
+          bodyText: descriptionText,
+          bottomActionWidgets: errorHandleWidget,),),);
   }
 }
