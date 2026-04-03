@@ -42,6 +42,28 @@ class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
 
+/// 현재 파일을 삭제 용도
+class DeleteFileIntent extends Intent {const DeleteFileIntent();}
+class DeleteFileAction extends Action<DeleteFileIntent> {
+  DeleteFileAction(this.model);
+  final FileModel model;
+  @override
+  Future<bool> invoke(covariant DeleteFileIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 삭제 전 확인
+    final bool isDeleted = await openConfirmModal(context,
+      Icons.delete_forever,
+      "주의: 파일 삭제",
+      "현재 파일을 완전히 삭제합니다.\n파일을 삭제하기 전 확인합니다.",
+      "삭제");
+    if (!isDeleted) return false;
+    return await model.deleteFile(); // 삭제 수행 및 결과 반환
+  }
+}
+
 /// 현재 파일을 목록에서 제거 용도
 class RemoveFileInListIntent extends Intent {const RemoveFileInListIntent();}
 class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
@@ -55,7 +77,7 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
 
     // 제거 전 확인
     final bool isDeleted = await openConfirmModal(context,
-      Icons.delete,
+      Icons.remove_circle,
       "주의: 목록에서 파일 제거",
       "현재 목록에서 이 파일을 완전히 제거합니다.\n파일을 제거하기 전 확인합니다.",
       "제거");
@@ -154,7 +176,7 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         /// 새 폴더 열기: `Ctrl + o`
         SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
         /// 현재 파일 삭제: `Shift + DEL`
-        // SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
+        SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
         /// 현재 파일을 목록에서 제거: `DEL`
         SingleActivator(LogicalKeyboardKey.delete): RemoveFileInListIntent(),
         /// 화면 초기화: `space`

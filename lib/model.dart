@@ -197,6 +197,22 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
+  /// 현재 파일을 삭제
+  Future<bool> deleteFile() async {
+    if (_currentFile == null) return false;
+    /// TODO: 대기 상태로 빌드:
+    /// 삭제 처리가 시작되었음을 알림 (용량이 큰 파일일 경우 오래 걸림)
+    try {
+      /// 파일 삭제
+      await _currentFile?.delete(); // 영구삭제
+      /// 현재 파일을 목록에서 제외
+      return await removeFileFromCurrentFileList();
+    } catch (e) {
+      /// TODO: 제거 도중 문제가 발생했음을 알림
+      return false;
+    }
+  }
+
   /// 이전 파일로 갱신
   bool previousFile() {
     if (_currentIndex == -1) return false;

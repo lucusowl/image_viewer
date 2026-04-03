@@ -117,12 +117,12 @@ class ViewerBottomPanel extends StatelessWidget {
                 //   leadingIcon: const Icon(Icons.save, size: 18.0),
                 //   child: const Text("다른 이름으로 저장"),
                 // ),
-                // MenuItemButton(
-                //   onPressed: Actions.handler<T>(context, T()),
-                //   shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),
-                //   leadingIcon: const Icon(Icons.delete, size: 18.0),
-                //   child: const Text("삭제"),
-                // ),
+                MenuItemButton(
+                  onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),
+                  leadingIcon: const Icon(Icons.delete_forever, size: 18.0),
+                  child: const Text("삭제"),
+                ),
                 MenuItemButton(
                   onPressed: Actions.handler<RemoveFileInListIntent>(context, RemoveFileInListIntent()),
                   shortcut: const SingleActivator(LogicalKeyboardKey.delete),
