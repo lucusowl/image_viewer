@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_viewer/error_tile.dart';
@@ -19,6 +20,8 @@ class _ViewPageState extends State<ViewPage> {
   final TransformationController _transformController = TransformationController();
   final GlobalKey _viewerKey = GlobalKey();
   final ValueNotifier<bool> _isFocusMode = ValueNotifier<bool>(false);
+  final ValueNotifier<MouseCursor> _cursorNotifier = ValueNotifier<MouseCursor>(SystemMouseCursors.none);
+  Timer? _hideTimer;
 
   /// 화면 초기화 기능
   void _zoomReset() {
@@ -82,10 +85,21 @@ class _ViewPageState extends State<ViewPage> {
     _isFocusMode.value = !_isFocusMode.value;
   }
 
+  /// 마우스 움직일 때 커서보이게 기능
+  void _onMouseHover(_) {
+    _cursorNotifier.value = MouseCursor.defer; // 커서 보이게
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(seconds: 1), () {
+      _cursorNotifier.value = SystemMouseCursors.none; // 커서 안보이게
+    });
+  }
+
   @override
   void dispose() {
     _transformController.dispose();
     _isFocusMode.dispose();
+    _cursorNotifier.dispose();
+    _hideTimer?.cancel();
     super.dispose();
   }
 
@@ -114,10 +128,21 @@ class _ViewPageState extends State<ViewPage> {
               return Stack(
                 children: [
                   // 이미지 메인 화면
-                  MouseRegion(
-                    cursor: (isFocus)? SystemMouseCursors.none: MouseCursor.defer,
-                    child: mainViewer!
-                  ),
+                  (isFocus)
+                    // 집중모드일 경우
+                    ? ValueListenableBuilder<MouseCursor>(
+                      valueListenable: _cursorNotifier,
+                      builder: (_, MouseCursor currentCursor, _) {
+                        return MouseRegion(
+                          cursor: currentCursor,
+                          onHover: _onMouseHover,
+                          onExit: (_) => _hideTimer?.cancel(),
+                          child: mainViewer!
+                        );
+                      },
+                    )
+                    // 집중모드가 아닐 경우
+                    : mainViewer!,
                   // 화면 오버레이
                   // 상태만 유지, 애니메이션,공간점유은 해제
                   Visibility(
