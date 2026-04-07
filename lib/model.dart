@@ -186,14 +186,13 @@ class FileModel with ChangeNotifier {
   Future<bool> saveAsFile() async {
     /// 현재 파일이 지정되어 있는지 확인
     if (_currentFile == null) return false;
-    if (_currentDirectory == null) return false;
 
     /// 저장할 파일 경로 받아오기
-    /// 파일명 뒤에 '-copy'추가, 확장자는 '.png' 권장
+    /// 권장파일명 뒤에 '-copy'추가, 확장자는 '.png' 권장
     final String suggestedName = fileName!.replaceRange(fileName!.lastIndexOf('.'), null, '-copy.png');
     final FileSaveLocation? savePath = await getSaveLocation(
       acceptedTypeGroups: _acceptedTypeGroups,
-      initialDirectory: _currentDirectory!.path,
+      initialDirectory: _currentDirectory?.path ?? Directory.current.path,
       suggestedName: suggestedName);
     if (savePath == null) return false;
 
