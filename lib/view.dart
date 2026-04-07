@@ -111,6 +111,8 @@ class _ViewPageState extends State<ViewPage> {
         actions: <Type, Action<Intent>>{
           OpenNewFileIntent: OpenNewFileAction(model),
           OpenNewDirectoryIntent: OpenNewDirectoryAction(model),
+          OpenFileByExplorerIntent: OpenFileByExplorerAction(model),
+          OpenFileByMSPaintIntent: OpenFileByMSPaintAction(model),
           MoveToPreviousFileIntent: MoveToPreviousFileAction(model),
           MoveToNextFileIntent: MoveToNextFileAction(model),
           SaveAsFileIntent: SaveAsFileAction(model),

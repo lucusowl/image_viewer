@@ -42,6 +42,24 @@ class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
 
+/// 현재 파일을 파일탐색기로 열기 용도
+class OpenFileByExplorerIntent extends Intent {const OpenFileByExplorerIntent();}
+class OpenFileByExplorerAction extends Action<OpenFileByExplorerIntent> {
+  OpenFileByExplorerAction(this.model);
+  final FileModel model;
+  @override
+  bool invoke(covariant OpenFileByExplorerIntent intent) => model.openFileByExplorer();
+}
+
+/// 현재 파일을 그림판으로 열기 용도
+class OpenFileByMSPaintIntent extends Intent {const OpenFileByMSPaintIntent();}
+class OpenFileByMSPaintAction extends Action<OpenFileByMSPaintIntent> {
+  OpenFileByMSPaintAction(this.model);
+  final FileModel model;
+  @override
+  bool invoke(covariant OpenFileByMSPaintIntent intent) => model.openFileByMSPaint();
+}
+
 /// 현재 이미지캐시를 다른 이름 파일로 저장 용도
 class SaveAsFileIntent extends Intent {const SaveAsFileIntent();}
 class SaveAsFileAction extends Action<SaveAsFileIntent> {
@@ -165,7 +183,7 @@ class GlobalShortcutWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        /// 전체화면 모드: `F11` 또는 `f`
+        /// 전체화면 모드: `F11` 또는 `F`
         SingleActivator(LogicalKeyboardKey.f11): FullScreenIntent(),
         SingleActivator(LogicalKeyboardKey.keyF): FullScreenIntent(),
       },
@@ -192,17 +210,21 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.arrowLeft): MoveToPreviousFileIntent(),
         /// 다음 파일: `방향키 왼쪽`
         SingleActivator(LogicalKeyboardKey.arrowRight): MoveToNextFileIntent(),
-        /// 새 파일 열기: `Ctrl + o`
+        /// 새 파일 열기: `Ctrl + O`
         SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
-        /// 새 폴더 열기: `Ctrl + o`
+        /// 새 폴더 열기: `Ctrl + O`
         SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
-        /// 다른 이름으로 저장: `Ctrl + s`
+        /// 파일탐색기로 열기: `Shift + Alt + R`
+        SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true): OpenFileByExplorerIntent(),
+        /// 그림판으로 열기: `Ctrl + Shift + P`
+        SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true): OpenFileByMSPaintIntent(),
+        /// 다른 이름으로 저장: `Ctrl + S`
         SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveAsFileIntent(),
         /// 현재 파일 삭제: `Shift + DEL`
         SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
         /// 현재 파일을 목록에서 제거: `DEL`
         SingleActivator(LogicalKeyboardKey.delete): RemoveFileInListIntent(),
-        /// 화면 초기화: `space`
+        /// 화면 초기화: `SPACE`
         SingleActivator(LogicalKeyboardKey.space): ResetViewerIntent(),
         /// 화면 확대: `+` 또는 확대키
         CharacterActivator('+'): ZoomInViewerIntent(),
@@ -210,7 +232,7 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         /// 화면 확대: `-` 또는 축소키
         CharacterActivator('-'): ZoomOutViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomOut): ZoomOutViewerIntent(),
-        /// 화면 집중 모드: `t`
+        /// 화면 집중 모드: `T`
         SingleActivator(LogicalKeyboardKey.keyT): FocusViewerIntent(),
       },
       child: child,

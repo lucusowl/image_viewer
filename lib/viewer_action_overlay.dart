@@ -105,12 +105,18 @@ class ViewerBottomPanel extends StatelessWidget {
                   leadingIcon: const Icon(Icons.folder_open, size: 18.0),
                   child: const Text("새 폴더 열기"),
                 ),
-                // MenuItemButton(
-                //   // onPressed: Actions.handler<T>(context, T()),
-                //   shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
-                //   leadingIcon: const Icon(Icons.palette, size: 18.0),
-                //   child: const Text("그림판으로 열기"),
-                // ),
+                MenuItemButton(
+                  onPressed: Actions.handler<OpenFileByExplorerIntent>(context, OpenFileByExplorerIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true),
+                  leadingIcon: const Icon(Icons.folder, size: 18.0),
+                  child: const Text("파일탐색기로 열기"),
+                ),
+                MenuItemButton(
+                  onPressed: Actions.handler<OpenFileByMSPaintIntent>(context, OpenFileByMSPaintIntent()),
+                  shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
+                  leadingIcon: const Icon(Icons.palette, size: 18.0),
+                  child: const Text("그림판으로 열기"),
+                ),
                 MenuItemButton(
                   onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent()),
                   shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
@@ -120,7 +126,7 @@ class ViewerBottomPanel extends StatelessWidget {
                     children: [
                       const Text("다른 이름으로 저장"),
                       const Tooltip(
-                        message: "파일을 복사하지 않고\n디코딩된 이미지 캐시를 PNG파일로 저장합니다.",
+                        message: "파일을 복사하는 방식이 아닌\n화면에 보이는 이미지의 디코딩된 캐시를 PNG파일로 저장합니다.",
                         child: Icon(Icons.info_outline, size: 15.0),
                       ),
                     ],

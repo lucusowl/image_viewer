@@ -297,6 +297,30 @@ class FileModel with ChangeNotifier {
     }
   }
 
+  /// 파일 탐색기로 열기
+  bool openFileByExplorer() {
+    if (_currentFile == null) return false;
+
+    Process.start("explorer.exe", ["/select,", _currentFile!.path], mode: .detached)
+    .then((process){process.stdin.close();})
+    .catchError((e) {
+      /// TODO: 프로세스 도중 알림
+    });
+    return true;
+  }
+
+  /// 그림판으로 열기
+  bool openFileByMSPaint() {
+    if (_currentFile == null) return false;
+
+    Process.start("mspaint.exe", [_currentFile!.path], mode: .detached)
+    .then((process){process.stdin.close();})
+    .catchError((e){
+      /// TODO: 프로세스 도중 알림
+    });
+    return true;
+  }
+
   @override
   void dispose() {
     _isReadyFileList.dispose();
