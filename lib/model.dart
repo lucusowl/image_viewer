@@ -358,4 +358,15 @@ class WindowController {
       debugPrint("Failed to toggle fullscreen: ${e.message}");
     }
   }
+
+  /// Windows 창의 Fullscreen을 강제 해제
+  static void unsetFullscreen() {
+    try {
+      platform.invokeMethod('unsetFullScreen').onError((e, s) {
+        debugPrint("Failed to unset fullscreen: $e");
+      });
+    } on PlatformException catch (e) {
+      debugPrint("Failed to unset fullscreen: ${e.message}");
+    }
+  }
 }

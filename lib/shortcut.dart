@@ -165,13 +165,20 @@ class FocusViewerAction extends Action<FocusViewerIntent> {
   void invoke(covariant FocusViewerIntent intent) => callback();
 }
 
-/// 전체화면 모드 용도
-/// 앱의 창 상태를 전체화면 모드로 토글
-class FullScreenIntent extends Intent {const FullScreenIntent();}
-class FullScreenAction extends Action<FullScreenIntent> {
-  FullScreenAction();
+/// 전체화면 모드 토글 용도
+class ToggleFullScreenIntent extends Intent {const ToggleFullScreenIntent();}
+class ToggleFullScreenAction extends Action<ToggleFullScreenIntent> {
+  ToggleFullScreenAction();
   @override
-  void invoke(covariant FullScreenIntent intent) => WindowController.toggleFullscreen();
+  void invoke(covariant ToggleFullScreenIntent intent) => WindowController.toggleFullscreen();
+}
+
+/// 전체화면 모드 해제 용도
+class UnsetFullScreenIntent extends Intent {const UnsetFullScreenIntent();}
+class UnsetFullScreenAction extends Action<UnsetFullScreenIntent> {
+  UnsetFullScreenAction();
+  @override
+  void invoke(covariant UnsetFullScreenIntent intent) => WindowController.unsetFullscreen();
 }
 
 /// 전역에서 사용할 단축키를 등록하는 위젯
@@ -183,13 +190,16 @@ class GlobalShortcutWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        /// 전체화면 모드: `F11` 또는 `F`
-        SingleActivator(LogicalKeyboardKey.f11): FullScreenIntent(),
-        SingleActivator(LogicalKeyboardKey.keyF): FullScreenIntent(),
+        /// 전체화면 모드 토글: `F11` 또는 `F`
+        SingleActivator(LogicalKeyboardKey.f11): ToggleFullScreenIntent(),
+        SingleActivator(LogicalKeyboardKey.keyF): ToggleFullScreenIntent(),
+        /// 전체화면 모드 해제: `ESC`
+        SingleActivator(LogicalKeyboardKey.escape): UnsetFullScreenIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
-          FullScreenIntent: FullScreenAction(),
+          ToggleFullScreenIntent: ToggleFullScreenAction(),
+          UnsetFullScreenIntent: UnsetFullScreenAction(),
         },
         child: child
       ),

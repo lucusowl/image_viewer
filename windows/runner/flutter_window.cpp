@@ -8,7 +8,7 @@
 #include <flutter/standard_method_codec.h>
 
 WINDOWPLACEMENT g_wpPrev = { sizeof(g_wpPrev) };
-void ToggleFullScreen(HWND hwnd);
+void ToggleFullScreen(HWND hwnd, bool isForceSet, bool isForceUnset);
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -41,7 +41,11 @@ bool FlutterWindow::OnCreate() {
       [this](const flutter::MethodCall<>& call,
              std::unique_ptr<flutter::MethodResult<>> result) {
         if (call.method_name() == "toggleFullScreen") {
-          ToggleFullScreen(GetHandle()); 
+          ToggleFullScreen(GetHandle(), false, false);
+          result->Success();
+        } else if (call.method_name() == "unsetFullScreen") {
+          // force to unset FullScreen
+          ToggleFullScreen(GetHandle(), false, true);
           result->Success();
         } else {
           result->NotImplemented();
@@ -93,24 +97,28 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
 }
 
-void ToggleFullScreen(HWND hwnd) {
+void ToggleFullScreen(HWND hwnd, bool isForceSet, bool isForceUnset) {
   DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
   if (dwStyle & WS_OVERLAPPEDWINDOW) {
-    MONITORINFO mi = { sizeof(mi) };
-    if (GetWindowPlacement(hwnd, &g_wpPrev) &&
-        GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
-      SetWindowLong(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-      SetWindowPos(hwnd, HWND_TOP,
-                   mi.rcMonitor.left, mi.rcMonitor.top,
-                   mi.rcMonitor.right - mi.rcMonitor.left,
-                   mi.rcMonitor.bottom - mi.rcMonitor.top,
-                   SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    if (!isForceUnset) {
+      MONITORINFO mi = { sizeof(mi) };
+      if (GetWindowPlacement(hwnd, &g_wpPrev) &&
+          GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
+        SetWindowLong(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+        SetWindowPos(hwnd, HWND_TOP,
+                    mi.rcMonitor.left, mi.rcMonitor.top,
+                    mi.rcMonitor.right - mi.rcMonitor.left,
+                    mi.rcMonitor.bottom - mi.rcMonitor.top,
+                    SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+      }
     }
   } else {
-    SetWindowLong(hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-    SetWindowPlacement(hwnd, &g_wpPrev);
-    SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    if (!isForceSet) {
+      SetWindowLong(hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+      SetWindowPlacement(hwnd, &g_wpPrev);
+      SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                  SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    }
   }
 }

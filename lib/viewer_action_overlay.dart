@@ -152,7 +152,7 @@ class ViewerBottomPanel extends StatelessWidget {
                   child: const Text("집중 모드"),
                 ),
                 MenuItemButton(
-                  onPressed: Actions.handler<FullScreenIntent>(context, FullScreenIntent()),
+                  onPressed: Actions.handler<ToggleFullScreenIntent>(context, ToggleFullScreenIntent()),
                   shortcut: const SingleActivator(LogicalKeyboardKey.keyF),
                   leadingIcon: const Icon(Icons.fullscreen, size: 18.0),
                   child: const Text("전체화면 모드"),
