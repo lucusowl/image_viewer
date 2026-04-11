@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:image_viewer/error_tile.dart';
+import 'package:image_viewer/snackbar.dart';
 
 /// 파일 관리 객체
 /// `_errorCode`, `_currentFile`를 변경한 경우 `notifyListeners()`를 호출할 것
@@ -112,17 +113,18 @@ class FileModel with ChangeNotifier {
     final String? path = await getDirectoryPath();
     if (path == null) return false;
 
+    // 캐시 비우기
     final ImageCache imageCache = PaintingBinding.instance.imageCache;
     imageCache.clear(); // 모든 캐시 해제
     imageCache.clearLiveImages(); // 화면에 표시된 캐시참조도 해제
 
     _currentDirectory = Directory(path).absolute;
+    // 표시할 파일을 찾고 있음을 화면에 표시
     _currentFile = null;
     _errorCode = null;
 
     notifyListeners();
 
-    // 캐시 비우기
     updateCurrentFileList(onSuccess: () {
       // 적합한 파일이 없는 폴더의 경우
       if (_currentFileList.isEmpty) {
@@ -145,9 +147,6 @@ class FileModel with ChangeNotifier {
   /// - [onSuccess]: 갱신을 성공적으로 완료한 이후 callback
   /// - [onError]: 갱신 도중 에러가 발생한 이루 callback, 에러객체 인자 전달됨
   Future<void> updateCurrentFileList({void Function()? onSuccess, void Function(Object)? onError}) async {
-    /// TODO: 갱신 처리가 시작 알림
-    /// (파일개수가 많을 경우 오래 걸림)
-
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
@@ -169,13 +168,12 @@ class FileModel with ChangeNotifier {
       _currentFileList.sort((File f1, File f2) => f1.path.toLowerCase().compareTo(f2.path.toLowerCase()));
       if (onSuccess != null) onSuccess();
       _isReadyFileList.value = true;
-      /// TODO: 갱신이 완료 알림
     },
     onError: (Object error) {
-      _errorCode = ErrorCode.errorLoadFiles;
+      /// 갱신 도중 문제가 발생 알림, ErrorCode.errorLoadFiles
+      GlobalSnackbar.showError("목록 갱신 오류 발생");
       if (onError != null) onError(error);
       _isReadyFileList.value = false;
-      /// TODO: 갱신 도중 문제가 발생 알림
     });
   }
 
@@ -184,11 +182,12 @@ class FileModel with ChangeNotifier {
   /// 파일을 복사하는 방식이 아닌 캐시에 디코딩된 데이터를 파일로 저장하는 방식.
   /// 때문에 파일을 삭제또는 변경 후 캐시에 있는 파일데이터 복원하는 용도로 활용가능.
   Future<bool> saveAsFile() async {
+    /// 유효성 검사
     /// 현재 파일이 지정되어 있는지 확인
     if (_currentFile == null) return false;
 
     /// 저장할 파일 경로 받아오기
-    /// 권장파일명 뒤에 '-copy'추가, 확장자는 '.png' 권장
+    /// 권장파일명 뒤에 '-copy'추가, 확장자는 기본 '.png'
     final String suggestedName = fileName!.replaceRange(fileName!.lastIndexOf('.'), null, '-copy.png');
     final FileSaveLocation? savePath = await getSaveLocation(
       acceptedTypeGroups: _acceptedTypeGroups,
@@ -196,10 +195,9 @@ class FileModel with ChangeNotifier {
       suggestedName: suggestedName);
     if (savePath == null) return false;
 
-    /// TODO: 저장 처리가 시작 알림
-    /// (용량이 큰 파일일 경우 오래 걸림)
+    /// 저장 시작 알림, (용량이 큰 파일일 경우 오래 걸림)
+    GlobalSnackbar.show("저장 중");
     try {
-
       /// ImageProvider로부터 이미지로드 스트림 생성
       final ImageStream stream = FileImage(_currentFile!).resolve(.empty);
       final Completer<ui.Image> completer = Completer<ui.Image>();
@@ -217,36 +215,44 @@ class FileModel with ChangeNotifier {
       ByteData? byteData = await image.toByteData(format: .png);
       if (byteData == null) return false;
       await File(savePath.path).writeAsBytes(byteData.buffer.asUint8List());
-      /// TODO: 저장이 완료 알림
+      /// 저장이 완료 알림
+      GlobalSnackbar.show("저장 완료");
       return true;
     } catch (e) {
-      /// TODO: 저장 도중 문제가 발생 알림
+      /// 저장 도중 문제가 발생 알림
+      GlobalSnackbar.showError("${savePath.path} 저장 오류");
       return false;
     }
   }
 
+  /// 목록에서 제거 유효성 검사
+  bool isNotValidToRemoveFileFromCurrentFileList() {
+    return (_currentFile == null);
+  }
   /// 현재 파일을 파일 목록에서 제거
-  Future<bool> removeFileFromCurrentFileList() async {
-    if (_currentFile == null) return false;
-
+  bool removeFileFromCurrentFileList() {
     /// 캐시 삭제
-    await FileImage(_currentFile!).evict();
+    FileImage(_currentFile!).evict().catchError((e,s) {
+      GlobalSnackbar.showError("캐시 삭제 불가");
+      return false;
+    });
 
     /// 현 파일 갱신 및 목록에서 삭제
     final int lengthOfFileList = _currentFileList.length;
     if (lengthOfFileList == 1) {
-      // 파일목록에 삭제할 파일만 있을 경우
+      /// 파일목록에 삭제할 파일만 있을 경우 => 파일없음 알림
       _currentFileList.removeAt(_currentIndex);
       _currentIndex = -1;
       _currentFile = null;
       _errorCode = .noFile;
     } else {
       if (lengthOfFileList == _currentIndex + 1) {
-        // 맨 뒤에 해당할 경우
+        /// 맨 뒤에 해당할 경우
         _currentFile = _currentFileList[_currentIndex-1];
         _currentFileList.removeAt(_currentIndex);
         _currentIndex--;
       } else {
+        /// 그 외
         _currentFile = _currentFileList[_currentIndex+1];
         _currentFileList.removeAt(_currentIndex);
       }
@@ -255,18 +261,20 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
+  /// 삭제 유효성 검사
+  bool isNotValidToDeleteFile() {
+    return (_currentFile == null);
+  }
   /// 현재 파일을 삭제
   Future<bool> deleteFile() async {
-    if (_currentFile == null) return false;
-    /// TODO: 삭제 처리가 시작 알림
-    /// (용량이 큰 파일일 경우 오래 걸림)
     try {
       /// 파일 삭제
       await _currentFile?.delete(); // 영구삭제
       /// 현재 파일을 목록에서 제외
-      return await removeFileFromCurrentFileList();
+      return removeFileFromCurrentFileList();
     } catch (e) {
-      /// TODO: 제거 도중 문제가 발생 알림
+      /// 제거 도중 문제가 발생 알림
+      GlobalSnackbar.showError("파일 삭제 오류");
       return false;
     }
   }
@@ -298,24 +306,26 @@ class FileModel with ChangeNotifier {
 
   /// 파일 탐색기로 열기
   bool openFileByExplorer() {
+    // 유효성 검사
     if (_currentFile == null) return false;
 
     Process.start("explorer.exe", ["/select,", _currentFile!.path], mode: .detached)
-    .then((process){process.stdin.close();})
+    // .then((process){GlobalSnackbar.show("파일 탐색기 열기 실행완료");})
     .catchError((e) {
-      /// TODO: 프로세스 도중 알림
+      GlobalSnackbar.showError("파일 탐색기 열기 실패");
     });
     return true;
   }
 
   /// 그림판으로 열기
   bool openFileByMSPaint() {
+    // 유효성 검사
     if (_currentFile == null) return false;
 
     Process.start("mspaint.exe", [_currentFile!.path], mode: .detached)
-    .then((process){process.stdin.close();})
+    // .then((process){GlobalSnackbar.show("그림판 열기 실행완료");})
     .catchError((e){
-      /// TODO: 프로세스 도중 알림
+      GlobalSnackbar.showError("그림판 열기 실패");
     });
     return true;
   }
@@ -350,23 +360,15 @@ class WindowController {
 
   /// Window 창의 FullScreen을 토글
   static void toggleFullscreen() {
-    try {
-      platform.invokeMethod('toggleFullScreen').onError((e, s) {
-        debugPrint("Failed to toggle fullscreen: $e");
-      });
-    } on PlatformException catch (e) {
-      debugPrint("Failed to toggle fullscreen: ${e.message}");
-    }
+    platform.invokeMethod('toggleFullScreen').catchError((e, s) {
+      GlobalSnackbar.showError("전체화면 토글 실패");
+    });
   }
 
   /// Windows 창의 Fullscreen을 강제 해제
   static void unsetFullscreen() {
-    try {
-      platform.invokeMethod('unsetFullScreen').onError((e, s) {
-        debugPrint("Failed to unset fullscreen: $e");
-      });
-    } on PlatformException catch (e) {
-      debugPrint("Failed to unset fullscreen: ${e.message}");
-    }
+    platform.invokeMethod('unsetFullScreen').catchError((e, s) {
+      GlobalSnackbar.showError("전체화면 토글 실패");
+    });
   }
 }

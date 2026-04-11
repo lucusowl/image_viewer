@@ -5,7 +5,7 @@ class GlobalSnackbar {
 
   /// SnackBar, 일반 메세지 표시
   /// - [message]: 스낵바에 표시할 내용
-  /// - [wait]: 현재 표시된 스낵바 닫힐 때까지 대기여부
+  /// - [wait]: 현재 표시된 스낵바 닫힐 때까지 대기여부, 기본값: false(바로갱신)
   static void show(String message, {bool wait = false}) {
     // snackbar를 표시할 수 있는지
     if (snackBarKey.currentState == null) return;
@@ -16,7 +16,7 @@ class GlobalSnackbar {
     snackBarKey.currentState?.showSnackBar(
       SnackBar(
         behavior: .floating,
-        duration: const Duration(seconds: 25),
+        duration: const Duration(seconds: 3),
         showCloseIcon: true,
         closeIconColor: Colors.white,
         elevation: 0,
@@ -35,7 +35,7 @@ class GlobalSnackbar {
 
   /// SnackBar, 오류 메세지 표시
   /// - [message]: 스낵바에 표시할 내용
-  /// - [wait]: 현재 표시된 스낵바 닫힐 때까지 대기여부
+  /// - [wait]: 현재 표시된 스낵바 닫힐 때까지 대기여부, 기본값: false(바로갱신)
   static void showError(String message, {bool wait = false}) {
     // snackbar를 표시할 수 있는지
     if (snackBarKey.currentState == null) return;
@@ -46,7 +46,7 @@ class GlobalSnackbar {
     snackBarKey.currentState?.showSnackBar(
       SnackBar(
         behavior: .floating,
-        duration: const Duration(seconds: 25),
+        duration: const Duration(seconds: 6),
         showCloseIcon: true,
         closeIconColor: Colors.red,
         elevation: 0,

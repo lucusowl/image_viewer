@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_viewer/dialog_tile.dart';
 import 'package:image_viewer/model.dart';
+import 'package:image_viewer/snackbar.dart';
 
 /// Actions & Intents 정의 영역
 /// 각 단축키 용도의 Intent와 Action을 정의해서 작성.
@@ -81,7 +82,7 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
     if (context == null || context.mounted != true) return false;
 
     // 파일 없음 => 경고 모달 열기
-    if (model.file == null) {
+    if (model.isNotValidToDeleteFile()) {
       await openAlertModal(context, Icons.warning, "파일 없음", "삭제할 파일이 없습니다.");
       return true;
     }
@@ -93,7 +94,14 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
       "현재 파일을 완전히 삭제합니다.\n파일을 삭제하기 전 확인합니다.",
       "삭제");
     if (!isDeleted) return false;
-    return await model.deleteFile(); // 삭제 수행 및 결과 반환
+
+    // 삭제 수행 및 결과 반환
+    // 삭제 처리가 시작 알림, (용량이 큰 파일일 경우 오래 걸림)
+    GlobalSnackbar.show("파일 삭제 중");
+    final result = await model.deleteFile();
+    /// 삭제 처리가 완료 알림
+    if (result) GlobalSnackbar.show("파일 삭제 완료");
+    return result;
   }
 }
 
@@ -109,7 +117,7 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
     if (context == null || context.mounted != true) return false;
 
     // 파일 없음 => 경고 모달 열기
-    if (model.file == null) {
+    if (model.isNotValidToRemoveFileFromCurrentFileList()) {
       await openAlertModal(context, Icons.warning, "파일 없음", "제거할 파일이 없습니다.");
       return true;
     }
@@ -121,7 +129,12 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
       "현재 목록에서 이 파일을 완전히 제거합니다.\n파일을 제거하기 전 확인합니다.",
       "제거");
     if (!isDeleted) return false;
-    return await model.removeFileFromCurrentFileList(); // 제거 수행 및 결과 반환
+
+    // 제거 수행 및 결과 반환
+    final result = model.removeFileFromCurrentFileList();
+    // 제거 수행 완료 알림
+    if (result) GlobalSnackbar.show("목록에서 제거됨");
+    return result;
   }
 }
 

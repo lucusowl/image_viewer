@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_viewer/error_tile.dart';
 import 'package:image_viewer/model.dart';
 import 'package:image_viewer/shortcut.dart';
+import 'package:image_viewer/snackbar.dart';
 import 'package:image_viewer/viewer_action_overlay.dart';
 
 class ViewPage extends StatefulWidget {
@@ -38,18 +39,22 @@ class _ViewPageState extends State<ViewPage> {
 
     final Size? viewerSize = _viewerKey.currentContext?.size;
     if (viewerSize == null) return;
-    final Offset viewportCenter = Offset(viewerSize.width / 2, viewerSize.height / 2);
-    final Matrix4 invertedMatrix = Matrix4.inverted(currentMatrix);
-    final sceneCenter = invertedMatrix.applyToVector3Array([
-      viewportCenter.dx, viewportCenter.dy, 0
-    ]);
+    try {
+      final Offset viewportCenter = Offset(viewerSize.width / 2, viewerSize.height / 2);
+      final Matrix4 invertedMatrix = Matrix4.inverted(currentMatrix);
+      final sceneCenter = invertedMatrix.applyToVector3Array([
+        viewportCenter.dx, viewportCenter.dy, 0
+      ]);
 
-    final Matrix4 newMatrix = currentMatrix.clone()
-      ..translateByDouble(sceneCenter[0], sceneCenter[1], 0.0, 1.0)
-      ..scaleByDouble(targetScale, targetScale, targetScale, 1.0)
-      ..translateByDouble(-sceneCenter[0], -sceneCenter[1], 0.0, 1.0);
+      final Matrix4 newMatrix = currentMatrix.clone()
+        ..translateByDouble(sceneCenter[0], sceneCenter[1], 0.0, 1.0)
+        ..scaleByDouble(targetScale, targetScale, targetScale, 1.0)
+        ..translateByDouble(-sceneCenter[0], -sceneCenter[1], 0.0, 1.0);
 
-    _transformController.value = newMatrix;
+      _transformController.value = newMatrix;
+    } catch (e) {
+      GlobalSnackbar.showError("zoom 동작 불가");
+    }
   }
 
   /// 2배 확대
