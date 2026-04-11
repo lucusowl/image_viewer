@@ -17,7 +17,7 @@ class ViewPage extends StatefulWidget {
 
 class _ViewPageState extends State<ViewPage> {
   final double _maxScale = 10.0;
-  final double _minScale = 1.0;
+  final double _minScale = 0.5;
   final TransformationController _transformController = TransformationController();
   final GlobalKey _viewerKey = GlobalKey();
   final ValueNotifier<bool> _isFocusMode = ValueNotifier<bool>(false);
@@ -57,11 +57,13 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
-  /// 2배 확대
-  void _zoomIn() {
+  /// zoom 확대 기능
+  /// 화면 중심으로 zoom, 최대 확대 배율까지 확대 가능
+  /// - [scale]: zoom 배율 지정, 기본값: 1.25
+  void _zoomIn([double? scale]) {
     // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
-    const double targetScale = 2.0;
+    final double targetScale = scale ?? 1.25;
     final double currentScale = _transformController.value.getMaxScaleOnAxis();
     if (currentScale >= _maxScale) return;
     if (currentScale * targetScale <= _maxScale) {
@@ -71,11 +73,13 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
-  /// 2배 축소
-  void _zoomOut() {
+  /// zoom 축소 기능
+  /// 화면 중심으로 zoom, 최소 축소 배율까지 확대 가능
+  /// - [scale]: zoom 배율 지정, 기본값: 0.8
+  void _zoomOut([double? scale]) {
     // _transformController 가 적용된 이후에만 동작
     if (!mounted) return;
-    const double targetScale = 0.5;
+    final double targetScale = scale ?? 0.8;
     final double currentScale = _transformController.value.getMaxScaleOnAxis();
     if (currentScale <= _minScale) return;
     if (currentScale * targetScale >= _minScale) {
