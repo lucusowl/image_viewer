@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_viewer/dialog_tile.dart';
 import 'package:image_viewer/model.dart';
 import 'package:image_viewer/snackbar.dart';
+import 'package:image_viewer/window_controller.dart';
 
 /// Actions & Intents 정의 영역
 /// 각 단축키 용도의 Intent와 Action을 정의해서 작성.
