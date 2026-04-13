@@ -64,8 +64,8 @@ class FileModel with ChangeNotifier {
   /// 이미 설정된 파일이 있을 경우 무시됨.
   void initFile(String? path) {
     // 유효성 검사
-    if (_currentFile != null) return; // 잘못된 접근 (파일없을 때 사용)
-    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
+    if (_currentFile != null) return;     // 잘못된 접근 (파일없을 때 사용)
+    if (_isLockCurrentFile.value          // 다른 곳에서 현재 파일을 갱신중
       || _isLockFileList.value) {return;} // 다른 곳에서 파일 목록을 갱신중
 
     if (path == null) {
@@ -90,14 +90,15 @@ class FileModel with ChangeNotifier {
     }
   }
 
+  /// 현재 파일 갱신 유효성 검사
+  bool isNotValidToPickFile() {
+    return (_isLockCurrentFile.value // 파일을 갱신중
+      || _isLockFileList.value);     // 목록을 갱신중
+  }
   /// 갱신할 파일을 선택
   ///
   /// 갱신할 파일이 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickFile() async {
-    // 유효성 검사
-    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
-      || _isLockFileList.value) {return false;} // 다른 곳에서 파일 목록을 갱신중
-
     // 변경할 파일을 지정
     final XFile? file = await openFile(acceptedTypeGroups: _acceptedTypeGroups);
     if (file == null) return false;
@@ -126,14 +127,15 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
+  /// 현재 폴더 갱신 유효성 검사
+  bool isNotValidToPickDirectory() {
+    return (_isLockCurrentFile.value // 파일을 갱신중
+      || _isLockFileList.value);     // 목록을 갱신중
+  }
   /// 갱신할 폴더 선택
   ///
   /// 갱신할 폴더가 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickDirectory() async {
-    // 유효성 검사
-    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
-      || _isLockFileList.value) {return false;} // 다른 곳에서 파일 목록을 갱신중
-
     // 변경할 폴더를 지정
     final String? path = await getDirectoryPath();
     if (path == null) return false;
@@ -199,16 +201,17 @@ class FileModel with ChangeNotifier {
     });
   }
 
+  /// 다른 이름 파일로 저장 유효성 검사
+  bool isNotValidToSaveAsFile() {
+    return (_currentFile == null    // 현재 파일이 없음
+      || _isLockCurrentFile.value); // 파일을 갱신중
+  }
   /// 현재 이미지캐시를 다른 이름 파일로 저장
   ///
   /// 파일을 복사하는 방식이 아닌 캐시에 디코딩된 데이터를 파일로 저장하는 방식.
   /// 때문에 앱 외부에서 파일을 삭제또는 변경 후
   /// 캐시에 있는 파일데이터 복원하는 용도로 활용가능.
   Future<bool> saveAsFile() async {
-    /// 유효성 검사
-    if (_currentFile == null // 현재 파일이 지정되어 있는지 확인
-      || _isLockCurrentFile.value) {return false;}
-
     /// 저장할 파일 경로 받아오기
     /// 권장파일명 뒤에 '-copy'추가, 확장자는 기본 '.png'
     final String suggestedName = fileName!.replaceRange(fileName!.lastIndexOf('.'), null, '-copy.png');
@@ -253,9 +256,9 @@ class FileModel with ChangeNotifier {
 
   /// 목록에서 제거 유효성 검사
   bool isNotValidToRemoveFileFromCurrentFileList() {
-    return (_currentFile == null // 현재 파일이 없음
+    return (_currentFile == null  // 현재 파일이 없음
       || _isLockCurrentFile.value // 파일을 갱신중
-      || _isLockFileList.value); // 목록을 갱신중
+      || _isLockFileList.value);  // 목록을 갱신중
   }
   /// 현재 파일을 파일 목록에서 제거
   bool removeFileFromCurrentFileList() {
@@ -291,9 +294,9 @@ class FileModel with ChangeNotifier {
 
   /// 삭제 유효성 검사
   bool isNotValidToDeleteFile() {
-    return (_currentFile == null
-      || _isLockCurrentFile.value
-      || isNotValidToRemoveFileFromCurrentFileList());
+    return (_currentFile == null  // 현재 파일이 없음
+      || _isLockCurrentFile.value // 파일을 갱신중
+      || _isLockFileList.value);  // (removeFileFromCurrentFileList 유효성) 합집합
   }
   /// 현재 파일을 삭제
   Future<bool> deleteFile() async {
@@ -312,12 +315,14 @@ class FileModel with ChangeNotifier {
     }
   }
 
+  /// 이전 파일로 갱신 유효성 검사
+  bool isNotValidToPreviousFile() {
+    return (_currentIndex == -1     // 현재 파일 위치없음
+      || _isLockFileList.value      // 목록을 갱신중
+      || _isLockCurrentFile.value); // 파일을 갱신중
+  }
   /// 이전 파일로 갱신
   bool previousFile() {
-    if (_currentIndex == -1
-      || _isLockFileList.value
-      || _isLockCurrentFile.value) {return false;}
-
     if (_currentIndex > 0) {
       _currentIndex--;
       _currentFile = _currentFileList[_currentIndex];
@@ -327,12 +332,14 @@ class FileModel with ChangeNotifier {
       return false;
     }
   }
+  /// 다음 파일로 갱신 유효성 검사
+  bool isNotValidToNextFile() {
+    return (_currentIndex == -1     // 현재 파일 위치없음
+      || _isLockFileList.value      // 목록을 갱신중
+      || _isLockCurrentFile.value); // 파일을 갱신중
+  }
   /// 다음 파일로 갱신
   bool nextFile() {
-    if (_currentIndex == -1
-      || _isLockFileList.value
-      || _isLockCurrentFile.value) {return false;}
-
     if (_currentIndex < _currentFileList.length-1) {
       _currentIndex++;
       _currentFile = _currentFileList[_currentIndex];
@@ -343,12 +350,13 @@ class FileModel with ChangeNotifier {
     }
   }
 
+  /// 파일 탐색기로 열기 유효성 검사
+  bool isNotValidToOpenFileByExplorer() {
+    return (_currentFile == null    // 현재 파일 없음
+      || _isLockCurrentFile.value); // 파일을 갱신중
+  }
   /// 파일 탐색기로 열기
   bool openFileByExplorer() {
-    // 유효성 검사
-    if (_currentFile == null
-      || _isLockCurrentFile.value) {return false;}
-
     Process.start("explorer.exe", ["/select,", _currentFile!.path], mode: .detached)
     // .then((process){GlobalSnackbar.show("파일 탐색기 열기 실행완료");})
     .catchError((e) {
@@ -357,12 +365,13 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
+  /// 그림판으로 열기 유효성 검사
+  bool isNotValidToOpenFileByMSPaint() {
+    return (_currentFile == null    // 현재 파일 없음
+      || _isLockCurrentFile.value); // 파일을 갱신중
+  }
   /// 그림판으로 열기
   bool openFileByMSPaint() {
-    // 유효성 검사
-    if (_currentFile == null
-      || _isLockCurrentFile.value) {return false;}
-
     Process.start("mspaint.exe", [_currentFile!.path], mode: .detached)
     // .then((process){GlobalSnackbar.show("그림판 열기 실행완료");})
     .catchError((e) {

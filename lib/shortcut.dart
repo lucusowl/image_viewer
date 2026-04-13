@@ -14,8 +14,7 @@ class MoveToPreviousFileAction extends Action<MoveToPreviousFileIntent> {
   MoveToPreviousFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(MoveToPreviousFileIntent intent) => 
-    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  bool isEnabled(MoveToPreviousFileIntent intent) => !model.isNotValidToPreviousFile();
   @override
   void invoke(covariant MoveToPreviousFileIntent intent) => model.previousFile();
 }
@@ -26,8 +25,7 @@ class MoveToNextFileAction extends Action<MoveToNextFileIntent> {
   MoveToNextFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(MoveToNextFileIntent intent) => 
-    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  bool isEnabled(MoveToNextFileIntent intent) => !model.isNotValidToNextFile();
   @override
   void invoke(covariant MoveToNextFileIntent intent) => model.nextFile();
 }
@@ -38,8 +36,7 @@ class OpenNewFileAction extends Action<OpenNewFileIntent> {
   OpenNewFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenNewFileIntent intent) => 
-    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  bool isEnabled(OpenNewFileIntent intent) => !model.isNotValidToPickFile();
   @override
   Future<bool> invoke(covariant OpenNewFileIntent intent) => model.pickFile();
 }
@@ -50,8 +47,7 @@ class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   OpenNewDirectoryAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenNewDirectoryIntent intent) => 
-    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  bool isEnabled(OpenNewDirectoryIntent intent) => !model.isNotValidToPickDirectory();
   @override
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
@@ -62,7 +58,7 @@ class OpenFileByExplorerAction extends Action<OpenFileByExplorerIntent> {
   OpenFileByExplorerAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenFileByExplorerIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
+  bool isEnabled(OpenFileByExplorerIntent intent) => !model.isNotValidToOpenFileByExplorer();
   @override
   bool invoke(covariant OpenFileByExplorerIntent intent) => model.openFileByExplorer();
 }
@@ -73,7 +69,7 @@ class OpenFileByMSPaintAction extends Action<OpenFileByMSPaintIntent> {
   OpenFileByMSPaintAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenFileByMSPaintIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
+  bool isEnabled(OpenFileByMSPaintIntent intent) => !model.isNotValidToOpenFileByMSPaint();
   @override
   bool invoke(covariant OpenFileByMSPaintIntent intent) => model.openFileByMSPaint();
 }
@@ -84,7 +80,7 @@ class SaveAsFileAction extends Action<SaveAsFileIntent> {
   SaveAsFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(SaveAsFileIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
+  bool isEnabled(SaveAsFileIntent intent) => !model.isNotValidToSaveAsFile();
   @override
   Future<bool> invoke(covariant SaveAsFileIntent intent) => model.saveAsFile();
 }
