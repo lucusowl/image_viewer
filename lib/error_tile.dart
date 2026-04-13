@@ -98,12 +98,12 @@ class ErrorTile extends StatelessWidget {
       // 새 파일 선택 처리
       .newFile => [
         TextButton.icon(
-          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
+          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent(fromButton: true)),
           icon: const Icon(Icons.file_open),
           label: const Text("파일 선택")
         ),
         TextButton.icon(
-          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent(fromButton: true)),
           icon: const Icon(Icons.folder_open),
           label: const Text("폴더 선택")
         ),

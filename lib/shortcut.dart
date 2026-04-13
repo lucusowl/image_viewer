@@ -9,99 +9,208 @@ import 'package:image_viewer/window_controller.dart';
 /// 각 단축키 용도의 Intent와 Action을 정의해서 작성.
 
 /// 이전 파일로 갱신 용도
-class MoveToPreviousFileIntent extends Intent {const MoveToPreviousFileIntent();}
+class MoveToPreviousFileIntent extends Intent {
+  const MoveToPreviousFileIntent({this.fromButton});
+  final bool? fromButton;
+}
 class MoveToPreviousFileAction extends Action<MoveToPreviousFileIntent> {
   MoveToPreviousFileAction(this.model);
   final FileModel model;
   @override
   bool isEnabled(MoveToPreviousFileIntent intent) => !model.isNotValidToPreviousFile();
   @override
-  void invoke(covariant MoveToPreviousFileIntent intent) => model.previousFile();
+  bool invoke(covariant MoveToPreviousFileIntent intent) => model.previousFile();
 }
 
 /// 다음 파일로 갱신 용도
-class MoveToNextFileIntent extends Intent {const MoveToNextFileIntent();}
+class MoveToNextFileIntent extends Intent {
+  const MoveToNextFileIntent({this.fromButton});
+  final bool? fromButton;
+}
 class MoveToNextFileAction extends Action<MoveToNextFileIntent> {
   MoveToNextFileAction(this.model);
   final FileModel model;
   @override
   bool isEnabled(MoveToNextFileIntent intent) => !model.isNotValidToNextFile();
   @override
-  void invoke(covariant MoveToNextFileIntent intent) => model.nextFile();
+  bool invoke(covariant MoveToNextFileIntent intent) => model.nextFile();
 }
 
 /// 현재 파일 갱신 용도
-class OpenNewFileIntent extends Intent {const OpenNewFileIntent();}
+class OpenNewFileIntent extends Intent {
+  const OpenNewFileIntent({this.fromButton});
+  final bool? fromButton;
+}
 class OpenNewFileAction extends Action<OpenNewFileIntent> {
   OpenNewFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenNewFileIntent intent) => !model.isNotValidToPickFile();
+  bool isEnabled(OpenNewFileIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToPickFile();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
-  Future<bool> invoke(covariant OpenNewFileIntent intent) => model.pickFile();
+  Future<bool> invoke(covariant OpenNewFileIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToPickFile()) {
+      await openAlertModal(context, Icons.warning, "주의", "갱신이 준비되지 않았습니다.");
+      return false;
+    }
+    return model.pickFile();
+  }
 }
 
 /// 현재 폴더 갱신 용도
-class OpenNewDirectoryIntent extends Intent {const OpenNewDirectoryIntent();}
+class OpenNewDirectoryIntent extends Intent {
+  const OpenNewDirectoryIntent({this.fromButton});
+  final bool? fromButton;
+}
 class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   OpenNewDirectoryAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenNewDirectoryIntent intent) => !model.isNotValidToPickDirectory();
+  bool isEnabled(OpenNewDirectoryIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToPickDirectory();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
-  Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
+  Future<bool> invoke(covariant OpenNewDirectoryIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToPickDirectory()) {
+      await openAlertModal(context, Icons.warning, "주의", "갱신이 준비되지 않았습니다.");
+      return false;
+    }
+    return model.pickDirectory();
+  }
 }
 
 /// 현재 파일을 파일탐색기로 열기 용도
-class OpenFileByExplorerIntent extends Intent {const OpenFileByExplorerIntent();}
+class OpenFileByExplorerIntent extends Intent {
+  const OpenFileByExplorerIntent({this.fromButton});
+  final bool? fromButton;
+}
 class OpenFileByExplorerAction extends Action<OpenFileByExplorerIntent> {
   OpenFileByExplorerAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenFileByExplorerIntent intent) => !model.isNotValidToOpenFileByExplorer();
+  bool isEnabled(OpenFileByExplorerIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToOpenFileByExplorer();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
-  bool invoke(covariant OpenFileByExplorerIntent intent) => model.openFileByExplorer();
+  Future<bool> invoke(covariant OpenFileByExplorerIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToOpenFileByExplorer()) {
+      await openAlertModal(context, Icons.warning, "주의", "파일이 준비되지 않았습니다.");
+      return false;
+    }
+    return model.openFileByExplorer();
+  }
 }
 
 /// 현재 파일을 그림판으로 열기 용도
-class OpenFileByMSPaintIntent extends Intent {const OpenFileByMSPaintIntent();}
+class OpenFileByMSPaintIntent extends Intent {
+  const OpenFileByMSPaintIntent({this.fromButton});
+  final bool? fromButton;
+}
 class OpenFileByMSPaintAction extends Action<OpenFileByMSPaintIntent> {
   OpenFileByMSPaintAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(OpenFileByMSPaintIntent intent) => !model.isNotValidToOpenFileByMSPaint();
+  bool isEnabled(OpenFileByMSPaintIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToOpenFileByMSPaint();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
-  bool invoke(covariant OpenFileByMSPaintIntent intent) => model.openFileByMSPaint();
+  Future<bool> invoke(covariant OpenFileByMSPaintIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToOpenFileByMSPaint()) {
+      await openAlertModal(context, Icons.warning, "주의", "파일이 준비되지 않았습니다.");
+      return false;
+    }
+    return model.openFileByMSPaint();
+  }
 }
 
 /// 현재 이미지캐시를 다른 이름 파일로 저장 용도
-class SaveAsFileIntent extends Intent {const SaveAsFileIntent();}
+class SaveAsFileIntent extends Intent {
+  const SaveAsFileIntent({this.fromButton});
+  final bool? fromButton;
+}
 class SaveAsFileAction extends Action<SaveAsFileIntent> {
   SaveAsFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(SaveAsFileIntent intent) => !model.isNotValidToSaveAsFile();
+  bool isEnabled(SaveAsFileIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToSaveAsFile();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
-  Future<bool> invoke(covariant SaveAsFileIntent intent) => model.saveAsFile();
+  Future<bool> invoke(covariant SaveAsFileIntent intent) async {
+    final BuildContext? context = FocusManager.instance.primaryFocus?.context;
+    // 경고를 띄울 수 없다면 비활성화
+    if (context == null || context.mounted != true) return false;
+
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToSaveAsFile()) {
+      await openAlertModal(context, Icons.warning, "주의", "파일을 저장할 수 없습니다.");
+      return false;
+    }
+    return model.saveAsFile();
+  }
 }
 
 /// 현재 파일을 삭제 용도
-class DeleteFileIntent extends Intent {const DeleteFileIntent();}
+class DeleteFileIntent extends Intent {
+  const DeleteFileIntent({this.fromButton});
+  final bool? fromButton;
+}
 class DeleteFileAction extends Action<DeleteFileIntent> {
   DeleteFileAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(DeleteFileIntent intent) => !model.isNotValidToDeleteFile();
+  bool isEnabled(DeleteFileIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToDeleteFile();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
   Future<bool> invoke(covariant DeleteFileIntent intent) async {
     final BuildContext? context = FocusManager.instance.primaryFocus?.context;
     // 경고를 띄울 수 없다면 비활성화
     if (context == null || context.mounted != true) return false;
 
-    // 파일 없음 => 경고 모달 열기
-    if (model.isNotValidToDeleteFile()) {
-      await openAlertModal(context, Icons.warning, "파일 없음", "파일을 삭제할 수 없습니다.");
-      return true;
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToDeleteFile()) {
+      await openAlertModal(context, Icons.warning, "주의", "파일을 삭제할 수 없습니다.");
+      return false;
     }
 
     // 삭제 전 확인
@@ -123,22 +232,30 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
 }
 
 /// 현재 파일을 목록에서 제거 용도
-class RemoveFileInListIntent extends Intent {const RemoveFileInListIntent();}
+class RemoveFileInListIntent extends Intent {
+  const RemoveFileInListIntent({this.fromButton});
+  final bool? fromButton;
+}
 class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
   RemoveFileInListAction(this.model);
   final FileModel model;
   @override
-  bool isEnabled(RemoveFileInListIntent intent) => !model.isNotValidToRemoveFileFromCurrentFileList();
+  bool isEnabled(RemoveFileInListIntent intent) {
+    // 버튼일 경우, 활성화여부 가시화
+    if (intent.fromButton == true) return !model.isNotValidToRemoveFileFromCurrentFileList();
+    // 버튼이 아닌 경우, invoke에서 Enabled 처리
+    return true;
+  }
   @override
   Future<bool> invoke(covariant RemoveFileInListIntent intent) async {
     final BuildContext? context = FocusManager.instance.primaryFocus?.context;
     // 경고를 띄울 수 없다면 비활성화
     if (context == null || context.mounted != true) return false;
 
-    // 파일 없음 => 경고 모달 열기
-    if (model.isNotValidToRemoveFileFromCurrentFileList()) {
-      await openAlertModal(context, Icons.warning, "파일 없음", "목록에서 제거할 수 없습니다.");
-      return true;
+    // 버튼이 아닌 Enabled 처리 => 경고 모달 열기
+    if (intent.fromButton != true && model.isNotValidToRemoveFileFromCurrentFileList()) {
+      await openAlertModal(context, Icons.warning, "주의", "목록에서 제거할 수 없습니다.");
+      return false;
     }
 
     // 제거 전 확인

@@ -21,7 +21,7 @@ class FileMoveIndicator extends StatelessWidget {
                 child: Padding(
                   padding: const .symmetric(horizontal: 16),
                   child: IconButton(
-                    onPressed: Actions.handler<MoveToPreviousFileIntent>(context, MoveToPreviousFileIntent()),
+                    onPressed: Actions.handler<MoveToPreviousFileIntent>(context, MoveToPreviousFileIntent(fromButton: true)),
                     icon: const Icon(Icons.arrow_back),
                     tooltip: "이전",
                   ),
@@ -34,7 +34,7 @@ class FileMoveIndicator extends StatelessWidget {
                 child: Padding(
                   padding: const .symmetric(horizontal: 16),
                   child: IconButton(
-                    onPressed: Actions.handler<MoveToNextFileIntent>(context, MoveToNextFileIntent()),
+                    onPressed: Actions.handler<MoveToNextFileIntent>(context, MoveToNextFileIntent(fromButton: true)),
                     icon: const Icon(Icons.arrow_forward),
                     tooltip: "다음",
                   ),
@@ -102,32 +102,32 @@ class ViewerBottomPanel extends StatelessWidget {
                     return Column(
                       children: [
                         MenuItemButton(
-                          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
+                          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
                           leadingIcon: const Icon(Icons.file_open, size: 18.0),
                           child: const Text("새 파일 열기"),
                         ),
                         MenuItemButton(
-                          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+                          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
                           leadingIcon: const Icon(Icons.folder_open, size: 18.0),
                           child: const Text("새 폴더 열기"),
                         ),
                         MenuItemButton(
-                          onPressed: Actions.handler<OpenFileByExplorerIntent>(context, OpenFileByExplorerIntent()),
+                          onPressed: Actions.handler<OpenFileByExplorerIntent>(context, OpenFileByExplorerIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true),
                           leadingIcon: const Icon(Icons.folder, size: 18.0),
                           child: const Text("파일탐색기로 열기"),
                         ),
                         MenuItemButton(
-                          onPressed: Actions.handler<OpenFileByMSPaintIntent>(context, OpenFileByMSPaintIntent()),
+                          onPressed: Actions.handler<OpenFileByMSPaintIntent>(context, OpenFileByMSPaintIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
                           leadingIcon: const Icon(Icons.palette, size: 18.0),
                           child: const Text("그림판으로 열기"),
                         ),
                         const Divider(),
                         MenuItemButton(
-                          onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent()),
+                          onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
                           leadingIcon: const Icon(Icons.save, size: 18.0),
                           child: const Row(
@@ -142,13 +142,13 @@ class ViewerBottomPanel extends StatelessWidget {
                           ),
                         ),
                         MenuItemButton(
-                          onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent()),
+                          onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),
                           leadingIcon: const Icon(Icons.delete_forever, size: 18.0),
                           child: const Text("삭제"),
                         ),
                         MenuItemButton(
-                          onPressed: Actions.handler<RemoveFileInListIntent>(context, RemoveFileInListIntent()),
+                          onPressed: Actions.handler<RemoveFileInListIntent>(context, RemoveFileInListIntent(fromButton: true)),
                           shortcut: const SingleActivator(LogicalKeyboardKey.delete),
                           leadingIcon: const Icon(Icons.remove_circle, size: 18.0),
                           child: const Text("목록에서 제거"),
