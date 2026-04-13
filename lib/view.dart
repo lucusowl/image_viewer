@@ -89,6 +89,16 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
+  /// 화면 더블 클릭시 화면 2배 확대 | 취소
+  void _onMouseDoubleUp() {
+    final double currentScale = _transformController.value.getMaxScaleOnAxis();
+    if (currentScale == 1) {
+      _zoomIn(2.0);
+    } else {
+      _zoomReset();
+    }
+  }
+
   /// 화면 집중 모드 토글 기능
   void _toggleFocusMode() {
     _isFocusMode.value = !_isFocusMode.value;
@@ -101,16 +111,6 @@ class _ViewPageState extends State<ViewPage> {
     _hideTimer = Timer(const Duration(seconds: 1), () {
       _cursorNotifier.value = SystemMouseCursors.none; // 커서 안보이게
     });
-  }
-
-  /// 화면 더블 클릭시 화면 2배 확대 | 취소
-  void _onMouseDoubleUp() {
-    final double currentScale = _transformController.value.getMaxScaleOnAxis();
-    if (currentScale == 1) {
-      _zoomIn(2.0);
-    } else {
-      _zoomReset();
-    }
   }
 
   @override

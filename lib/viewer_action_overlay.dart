@@ -93,57 +93,67 @@ class ViewerBottomPanel extends StatelessWidget {
 
             MenuAnchor(
               menuChildren: [
-                MenuItemButton(
-                  onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
-                  leadingIcon: const Icon(Icons.file_open, size: 18.0),
-                  child: const Text("새 파일 열기"),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
-                  leadingIcon: const Icon(Icons.folder_open, size: 18.0),
-                  child: const Text("새 폴더 열기"),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<OpenFileByExplorerIntent>(context, OpenFileByExplorerIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true),
-                  leadingIcon: const Icon(Icons.folder, size: 18.0),
-                  child: const Text("파일탐색기로 열기"),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<OpenFileByMSPaintIntent>(context, OpenFileByMSPaintIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
-                  leadingIcon: const Icon(Icons.palette, size: 18.0),
-                  child: const Text("그림판으로 열기"),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
-                  leadingIcon: const Icon(Icons.save, size: 18.0),
-                  child: Row(
-                    spacing: 3.0,
-                    children: [
-                      const Text("다른 이름으로 저장"),
-                      const Tooltip(
-                        message: "파일을 복사하는 방식이 아닌\n화면에 보이는 이미지의 디코딩된 캐시를 PNG파일로 저장합니다.",
-                        child: Icon(Icons.info_outline, size: 15.0),
-                      ),
-                    ],
-                  ),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),
-                  leadingIcon: const Icon(Icons.delete_forever, size: 18.0),
-                  child: const Text("삭제"),
-                ),
-                MenuItemButton(
-                  onPressed: Actions.handler<RemoveFileInListIntent>(context, RemoveFileInListIntent()),
-                  shortcut: const SingleActivator(LogicalKeyboardKey.delete),
-                  leadingIcon: const Icon(Icons.remove_circle, size: 18.0),
-                  child: const Text("목록에서 제거"),
-                ),
+                ListenableBuilder(
+                  listenable: Listenable.merge([
+                    FileModelProvider.of(context).model.isBusyFileList,
+                    FileModelProvider.of(context).model.isBusyCurrentFile,
+                  ]),
+                  builder: (_, _) {
+                    return Column(
+                      children: [
+                        MenuItemButton(
+                          onPressed: Actions.handler<OpenNewFileIntent>(context, OpenNewFileIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
+                          leadingIcon: const Icon(Icons.file_open, size: 18.0),
+                          child: const Text("새 파일 열기"),
+                        ),
+                        MenuItemButton(
+                          onPressed: Actions.handler<OpenNewDirectoryIntent>(context, OpenNewDirectoryIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true),
+                          leadingIcon: const Icon(Icons.folder_open, size: 18.0),
+                          child: const Text("새 폴더 열기"),
+                        ),
+                        MenuItemButton(
+                          onPressed: Actions.handler<OpenFileByExplorerIntent>(context, OpenFileByExplorerIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true),
+                          leadingIcon: const Icon(Icons.folder, size: 18.0),
+                          child: const Text("파일탐색기로 열기"),
+                        ),
+                        MenuItemButton(
+                          onPressed: Actions.handler<OpenFileByMSPaintIntent>(context, OpenFileByMSPaintIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true),
+                          leadingIcon: const Icon(Icons.palette, size: 18.0),
+                          child: const Text("그림판으로 열기"),
+                        ),
+                        const Divider(),
+                        MenuItemButton(
+                          onPressed: Actions.handler<SaveAsFileIntent>(context, SaveAsFileIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
+                          leadingIcon: const Icon(Icons.save, size: 18.0),
+                          child: const Row(
+                            spacing: 3.0,
+                            children: [
+                              Text("다른 이름으로 저장"),
+                              Tooltip(
+                                message: "파일을 복사하는 방식이 아닌\n화면에 보이는 이미지의 디코딩된 캐시를 PNG파일로 저장합니다.",
+                                child: Icon(Icons.info_outline, size: 15.0),
+                              ),
+                            ],
+                          ),
+                        ),
+                        MenuItemButton(
+                          onPressed: Actions.handler<DeleteFileIntent>(context, DeleteFileIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.delete, shift: true),
+                          leadingIcon: const Icon(Icons.delete_forever, size: 18.0),
+                          child: const Text("삭제"),
+                        ),
+                        MenuItemButton(
+                          onPressed: Actions.handler<RemoveFileInListIntent>(context, RemoveFileInListIntent()),
+                          shortcut: const SingleActivator(LogicalKeyboardKey.delete),
+                          leadingIcon: const Icon(Icons.remove_circle, size: 18.0),
+                          child: const Text("목록에서 제거"),
+                        ),],);
+                  },),
                 const Divider(),
                 MenuItemButton(
                   onPressed: Actions.handler<FocusViewerIntent>(context, FocusViewerIntent()),
@@ -183,14 +193,14 @@ class ViewerActionOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: FileModelProvider.of(context).model.isReadyFileList,
-      builder:(_, bool isReady, Widget? viewerBottomPanel) {
+      valueListenable: FileModelProvider.of(context).model.isBusyFileList,
+      builder:(_, bool isBusy, Widget? viewerBottomPanel) {
         return Stack(
           children: [
             // 좌우 파일 이동 버튼
             // 파일목록이 갱신중이라면 미표시
             Visibility(
-              visible: isReady,
+              visible: !isBusy,
               child: const FileMoveIndicator(),
             ),
             // 하단 화면 조작 패널

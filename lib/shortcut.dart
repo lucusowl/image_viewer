@@ -14,6 +14,9 @@ class MoveToPreviousFileAction extends Action<MoveToPreviousFileIntent> {
   MoveToPreviousFileAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(MoveToPreviousFileIntent intent) => 
+    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  @override
   void invoke(covariant MoveToPreviousFileIntent intent) => model.previousFile();
 }
 
@@ -22,6 +25,9 @@ class MoveToNextFileIntent extends Intent {const MoveToNextFileIntent();}
 class MoveToNextFileAction extends Action<MoveToNextFileIntent> {
   MoveToNextFileAction(this.model);
   final FileModel model;
+  @override
+  bool isEnabled(MoveToNextFileIntent intent) => 
+    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
   @override
   void invoke(covariant MoveToNextFileIntent intent) => model.nextFile();
 }
@@ -32,6 +38,9 @@ class OpenNewFileAction extends Action<OpenNewFileIntent> {
   OpenNewFileAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(OpenNewFileIntent intent) => 
+    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
+  @override
   Future<bool> invoke(covariant OpenNewFileIntent intent) => model.pickFile();
 }
 
@@ -40,6 +49,9 @@ class OpenNewDirectoryIntent extends Intent {const OpenNewDirectoryIntent();}
 class OpenNewDirectoryAction extends Action<OpenNewDirectoryIntent> {
   OpenNewDirectoryAction(this.model);
   final FileModel model;
+  @override
+  bool isEnabled(OpenNewDirectoryIntent intent) => 
+    !(model.isBusyFileList.value || model.isBusyCurrentFile.value);
   @override
   Future<bool> invoke(covariant OpenNewDirectoryIntent intent) => model.pickDirectory();
 }
@@ -50,6 +62,8 @@ class OpenFileByExplorerAction extends Action<OpenFileByExplorerIntent> {
   OpenFileByExplorerAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(OpenFileByExplorerIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
+  @override
   bool invoke(covariant OpenFileByExplorerIntent intent) => model.openFileByExplorer();
 }
 
@@ -58,6 +72,8 @@ class OpenFileByMSPaintIntent extends Intent {const OpenFileByMSPaintIntent();}
 class OpenFileByMSPaintAction extends Action<OpenFileByMSPaintIntent> {
   OpenFileByMSPaintAction(this.model);
   final FileModel model;
+  @override
+  bool isEnabled(OpenFileByMSPaintIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
   @override
   bool invoke(covariant OpenFileByMSPaintIntent intent) => model.openFileByMSPaint();
 }
@@ -68,6 +84,8 @@ class SaveAsFileAction extends Action<SaveAsFileIntent> {
   SaveAsFileAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(SaveAsFileIntent intent) => !(model.file == null || model.isBusyCurrentFile.value);
+  @override
   Future<bool> invoke(covariant SaveAsFileIntent intent) => model.saveAsFile();
 }
 
@@ -77,6 +95,8 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
   DeleteFileAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(DeleteFileIntent intent) => !model.isNotValidToDeleteFile();
+  @override
   Future<bool> invoke(covariant DeleteFileIntent intent) async {
     final BuildContext? context = FocusManager.instance.primaryFocus?.context;
     // 경고를 띄울 수 없다면 비활성화
@@ -84,7 +104,7 @@ class DeleteFileAction extends Action<DeleteFileIntent> {
 
     // 파일 없음 => 경고 모달 열기
     if (model.isNotValidToDeleteFile()) {
-      await openAlertModal(context, Icons.warning, "파일 없음", "삭제할 파일이 없습니다.");
+      await openAlertModal(context, Icons.warning, "파일 없음", "파일을 삭제할 수 없습니다.");
       return true;
     }
 
@@ -112,6 +132,8 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
   RemoveFileInListAction(this.model);
   final FileModel model;
   @override
+  bool isEnabled(RemoveFileInListIntent intent) => !model.isNotValidToRemoveFileFromCurrentFileList();
+  @override
   Future<bool> invoke(covariant RemoveFileInListIntent intent) async {
     final BuildContext? context = FocusManager.instance.primaryFocus?.context;
     // 경고를 띄울 수 없다면 비활성화
@@ -119,7 +141,7 @@ class RemoveFileInListAction extends Action<RemoveFileInListIntent> {
 
     // 파일 없음 => 경고 모달 열기
     if (model.isNotValidToRemoveFileFromCurrentFileList()) {
-      await openAlertModal(context, Icons.warning, "파일 없음", "제거할 파일이 없습니다.");
+      await openAlertModal(context, Icons.warning, "파일 없음", "목록에서 제거할 수 없습니다.");
       return true;
     }
 
@@ -159,8 +181,8 @@ class ZoomInViewerAction extends Action<ZoomInViewerIntent> {
   void invoke(covariant ZoomInViewerIntent intent) => callback();
 }
 
-/// 화면 줌 취소 용도
-/// InteractiveViewer의 view zoom을 취소
+/// 화면 줌 축소 용도
+/// InteractiveViewer의 view zoom을 축소
 class ZoomOutViewerIntent extends Intent {const ZoomOutViewerIntent();}
 class ZoomOutViewerAction extends Action<ZoomOutViewerIntent> {
   ZoomOutViewerAction(this.callback);

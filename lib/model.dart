@@ -47,12 +47,27 @@ class FileModel with ChangeNotifier {
   /// `FileModel`의 현재 파일이 파일 목록의 마지막인지 여부를 반환
   bool get isLast => (_currentIndex == -1 || _currentIndex == _currentFileList.length-1);
 
+  /// 파일목록 변경시 lock
+  final ValueNotifier<bool> _isLockFileList = ValueNotifier<bool>(false);
+  /// 현재 파일 변경시 lock
+  final ValueNotifier<bool> _isLockCurrentFile = ValueNotifier<bool>(false);
+  /// 파일 목록 변경 알림자  
+  /// true일 경우 파일 목록이 준비중임을 리스너에 알림
+  ValueNotifier<bool> get isBusyFileList => _isLockFileList;
+  /// 현재 파일 변경 알림자  
+  /// true일 경우 파일이 준비중임을 리스너에 알림
+  ValueNotifier<bool> get isBusyCurrentFile => _isLockCurrentFile;
+
   /// 현재 파일을 갱신
   ///
   /// 재빌드 요청없이 진행용도로 사용할 것. (최초 빌드)
   /// 이미 설정된 파일이 있을 경우 무시됨.
   void initFile(String? path) {
-    if (_currentFile != null) return;
+    // 유효성 검사
+    if (_currentFile != null) return; // 잘못된 접근 (파일없을 때 사용)
+    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
+      || _isLockFileList.value) {return;} // 다른 곳에서 파일 목록을 갱신중
+
     if (path == null) {
       _currentFile = null;
       _currentDirectory = null;
@@ -79,6 +94,11 @@ class FileModel with ChangeNotifier {
   ///
   /// 갱신할 파일이 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickFile() async {
+    // 유효성 검사
+    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
+      || _isLockFileList.value) {return false;} // 다른 곳에서 파일 목록을 갱신중
+
+    // 변경할 파일을 지정
     final XFile? file = await openFile(acceptedTypeGroups: _acceptedTypeGroups);
     if (file == null) return false;
 
@@ -110,6 +130,11 @@ class FileModel with ChangeNotifier {
   ///
   /// 갱신할 폴더가 선택되지 않은 경우 false가 반환되며 갱신이 이루어지지 않음.
   Future<bool> pickDirectory() async {
+    // 유효성 검사
+    if (_isLockCurrentFile.value // 다른 곳에서 현재 파일을 갱신중
+      || _isLockFileList.value) {return false;} // 다른 곳에서 파일 목록을 갱신중
+
+    // 변경할 폴더를 지정
     final String? path = await getDirectoryPath();
     if (path == null) return false;
 
@@ -138,19 +163,16 @@ class FileModel with ChangeNotifier {
     return true;
   }
 
-  /// 파일 목록 변경 알림자
-  final ValueNotifier<bool> _isReadyFileList = ValueNotifier<bool>(false);
-  ValueNotifier<bool> get isReadyFileList => _isReadyFileList;
   /// 파일 목록 갱신
   ///
   /// 비동기로 파일이 있는 폴더와 파일 목록을 갱신.
   /// - [onSuccess]: 갱신을 성공적으로 완료한 이후 callback
   /// - [onError]: 갱신 도중 에러가 발생한 이루 callback, 에러객체 인자 전달됨
-  Future<void> updateCurrentFileList({void Function()? onSuccess, void Function(Object)? onError}) async {
+  void updateCurrentFileList({void Function()? onSuccess, void Function(Object)? onError}) {
     /// 파일목록 초기화
     _currentFileList.clear();
     _currentIndex = -1;
-    _isReadyFileList.value = false;
+    _isLockFileList.value = true;
 
     _currentDirectory!.list().listen((FileSystemEntity entity) {
       // 파일이고 이미지확장자를 가진 경우 => 파일목록에 추가
@@ -167,24 +189,25 @@ class FileModel with ChangeNotifier {
       // 파일명으로 오름차순 정렬
       _currentFileList.sort((File f1, File f2) => f1.path.toLowerCase().compareTo(f2.path.toLowerCase()));
       if (onSuccess != null) onSuccess();
-      _isReadyFileList.value = true;
+      _isLockFileList.value = false;
     },
     onError: (Object error) {
       /// 갱신 도중 문제가 발생 알림, ErrorCode.errorLoadFiles
       GlobalSnackbar.showError("목록 갱신 오류 발생");
       if (onError != null) onError(error);
-      _isReadyFileList.value = false;
+      _isLockFileList.value = false;
     });
   }
 
   /// 현재 이미지캐시를 다른 이름 파일로 저장
   ///
   /// 파일을 복사하는 방식이 아닌 캐시에 디코딩된 데이터를 파일로 저장하는 방식.
-  /// 때문에 파일을 삭제또는 변경 후 캐시에 있는 파일데이터 복원하는 용도로 활용가능.
+  /// 때문에 앱 외부에서 파일을 삭제또는 변경 후
+  /// 캐시에 있는 파일데이터 복원하는 용도로 활용가능.
   Future<bool> saveAsFile() async {
     /// 유효성 검사
-    /// 현재 파일이 지정되어 있는지 확인
-    if (_currentFile == null) return false;
+    if (_currentFile == null // 현재 파일이 지정되어 있는지 확인
+      || _isLockCurrentFile.value) {return false;}
 
     /// 저장할 파일 경로 받아오기
     /// 권장파일명 뒤에 '-copy'추가, 확장자는 기본 '.png'
@@ -199,6 +222,7 @@ class FileModel with ChangeNotifier {
     GlobalSnackbar.show("저장 중");
     try {
       /// ImageProvider로부터 이미지로드 스트림 생성
+      _isLockCurrentFile.value = true;
       final ImageStream stream = FileImage(_currentFile!).resolve(.empty);
       final Completer<ui.Image> completer = Completer<ui.Image>();
 
@@ -213,12 +237,14 @@ class FileModel with ChangeNotifier {
       /// png 포멧으로 파일을 저장
       /// 무손실 포멧, 디코딩된 캐시데이터를 그대로 파일로 저장
       ByteData? byteData = await image.toByteData(format: .png);
-      if (byteData == null) return false;
-      await File(savePath.path).writeAsBytes(byteData.buffer.asUint8List());
+      _isLockCurrentFile.value = false; // 이후 현재 파일 변경가능
+      await File(savePath.path).writeAsBytes(byteData?.buffer.asUint8List() ?? []);
+
       /// 저장이 완료 알림
       GlobalSnackbar.show("저장 완료");
       return true;
     } catch (e) {
+      if (_isLockCurrentFile.value) _isLockCurrentFile.value = false;
       /// 저장 도중 문제가 발생 알림
       GlobalSnackbar.showError("${savePath.path} 저장 오류");
       return false;
@@ -227,7 +253,9 @@ class FileModel with ChangeNotifier {
 
   /// 목록에서 제거 유효성 검사
   bool isNotValidToRemoveFileFromCurrentFileList() {
-    return (_currentFile == null);
+    return (_currentFile == null // 현재 파일이 없음
+      || _isLockCurrentFile.value // 파일을 갱신중
+      || _isLockFileList.value); // 목록을 갱신중
   }
   /// 현재 파일을 파일 목록에서 제거
   bool removeFileFromCurrentFileList() {
@@ -263,16 +291,21 @@ class FileModel with ChangeNotifier {
 
   /// 삭제 유효성 검사
   bool isNotValidToDeleteFile() {
-    return (_currentFile == null);
+    return (_currentFile == null
+      || _isLockCurrentFile.value
+      || isNotValidToRemoveFileFromCurrentFileList());
   }
   /// 현재 파일을 삭제
   Future<bool> deleteFile() async {
     try {
       /// 파일 삭제
+      _isLockCurrentFile.value = true;
       await _currentFile?.delete(); // 영구삭제
+      _isLockCurrentFile.value = false;
       /// 현재 파일을 목록에서 제외
       return removeFileFromCurrentFileList();
     } catch (e) {
+      if (_isLockCurrentFile.value) _isLockCurrentFile.value = false;
       /// 제거 도중 문제가 발생 알림
       GlobalSnackbar.showError("파일 삭제 오류");
       return false;
@@ -281,7 +314,10 @@ class FileModel with ChangeNotifier {
 
   /// 이전 파일로 갱신
   bool previousFile() {
-    if (_currentIndex == -1) return false;
+    if (_currentIndex == -1
+      || _isLockFileList.value
+      || _isLockCurrentFile.value) {return false;}
+
     if (_currentIndex > 0) {
       _currentIndex--;
       _currentFile = _currentFileList[_currentIndex];
@@ -293,7 +329,10 @@ class FileModel with ChangeNotifier {
   }
   /// 다음 파일로 갱신
   bool nextFile() {
-    if (_currentIndex == -1) return false;
+    if (_currentIndex == -1
+      || _isLockFileList.value
+      || _isLockCurrentFile.value) {return false;}
+
     if (_currentIndex < _currentFileList.length-1) {
       _currentIndex++;
       _currentFile = _currentFileList[_currentIndex];
@@ -307,7 +346,8 @@ class FileModel with ChangeNotifier {
   /// 파일 탐색기로 열기
   bool openFileByExplorer() {
     // 유효성 검사
-    if (_currentFile == null) return false;
+    if (_currentFile == null
+      || _isLockCurrentFile.value) {return false;}
 
     Process.start("explorer.exe", ["/select,", _currentFile!.path], mode: .detached)
     // .then((process){GlobalSnackbar.show("파일 탐색기 열기 실행완료");})
@@ -320,7 +360,8 @@ class FileModel with ChangeNotifier {
   /// 그림판으로 열기
   bool openFileByMSPaint() {
     // 유효성 검사
-    if (_currentFile == null) return false;
+    if (_currentFile == null
+      || _isLockCurrentFile.value) {return false;}
 
     Process.start("mspaint.exe", [_currentFile!.path], mode: .detached)
     // .then((process){GlobalSnackbar.show("그림판 열기 실행완료");})
@@ -332,7 +373,8 @@ class FileModel with ChangeNotifier {
 
   @override
   void dispose() {
-    _isReadyFileList.dispose();
+    _isLockFileList.dispose();
+    _isLockCurrentFile.dispose();
     super.dispose();
   }
 }
