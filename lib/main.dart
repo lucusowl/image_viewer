@@ -6,7 +6,8 @@ void main(List<String> args) {
   String? initialFilePath;
 
   if (args.isNotEmpty) {
-    // TEMP, 1st param
+    /// 1st param: 파일명으로 취급
+    /// 이외의 인자는 모두 무시
     initialFilePath = args[0];
   }
 
