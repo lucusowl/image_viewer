@@ -18,10 +18,10 @@ class ViewPage extends StatefulWidget {
 class _ViewPageState extends State<ViewPage> {
   final double _maxScale = 10.0;
   final double _minScale = 0.5;
-  final TransformationController _transformController = TransformationController();
-  final GlobalKey _viewerKey = GlobalKey();
-  final ValueNotifier<bool> _isFocusMode = ValueNotifier<bool>(false);
-  final ValueNotifier<MouseCursor> _cursorNotifier = ValueNotifier<MouseCursor>(SystemMouseCursors.none);
+  late final TransformationController _transformController;
+  late final GlobalKey _viewerKey;
+  late final ValueNotifier<bool> _isFocusMode;
+  late final ValueNotifier<MouseCursor> _cursorNotifier;
   Timer? _hideTimer;
 
   /// 화면 초기화 기능
@@ -114,6 +114,15 @@ class _ViewPageState extends State<ViewPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _transformController = TransformationController();
+    _viewerKey = GlobalKey();
+    _isFocusMode = ValueNotifier<bool>(false);
+    _cursorNotifier = ValueNotifier<MouseCursor>(SystemMouseCursors.none);
+  }
+
+  @override
   void dispose() {
     _transformController.dispose();
     _isFocusMode.dispose();
@@ -150,21 +159,18 @@ class _ViewPageState extends State<ViewPage> {
               return Stack(
                 children: [
                   // 이미지 메인 화면
-                  (isFocus)
-                    // 집중모드일 경우
-                    ? ValueListenableBuilder<MouseCursor>(
-                      valueListenable: _cursorNotifier,
-                      builder: (_, MouseCursor currentCursor, _) {
-                        return MouseRegion(
-                          cursor: currentCursor,
-                          onHover: _onMouseHover,
-                          onExit: (_) => _hideTimer?.cancel(),
-                          child: mainViewer!
-                        );
-                      },
-                    )
-                    // 집중모드가 아닐 경우
-                    : mainViewer!,
+                  ValueListenableBuilder<MouseCursor>(
+                    valueListenable: _cursorNotifier,
+                    builder: (_, MouseCursor currentCursor, Widget? viewer) {
+                      return MouseRegion(
+                        cursor: currentCursor,
+                        onHover: _onMouseHover,
+                        onExit: (_) => _hideTimer?.cancel(),
+                        child: viewer
+                      );
+                    },
+                    child: mainViewer,
+                  ),
                   // 화면 오버레이
                   // 상태만 유지, 애니메이션,공간점유은 해제
                   Visibility(
