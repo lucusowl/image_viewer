@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_viewer/dialog_tile.dart';
 import 'package:image_viewer/model.dart';
 import 'package:image_viewer/snackbar.dart';
+import 'package:image_viewer/view.dart';
 import 'package:image_viewer/window_controller.dart';
 
 /// Actions & Intents 정의 영역
@@ -304,6 +305,60 @@ class ZoomOutViewerAction extends Action<ZoomOutViewerIntent> {
   void invoke(covariant ZoomOutViewerIntent intent) => callback();
 }
 
+/// 화면 이동 용도
+class PanViewerIntent extends Intent {
+  const PanViewerIntent(this.direction);
+  final MoveDirection direction;
+}
+class PanViewerAction extends Action<PanViewerIntent> {
+  PanViewerAction(
+    this.upCallback,
+    this.downCallback,
+    this.leftCallback,
+    this.rightCallback,
+  );
+  final VoidCallback upCallback;
+  final VoidCallback downCallback;
+  final VoidCallback leftCallback;
+  final VoidCallback rightCallback;
+  @override
+  void invoke(covariant PanViewerIntent intent) {
+    switch (intent.direction) {
+      case .up   : return upCallback();
+      case .down : return downCallback();
+      case .left : return leftCallback();
+      case .right: return rightCallback();
+    }
+  }
+}
+
+/// 화면 세밀 이동 용도
+class PanViewerSlowIntent extends Intent {
+  const PanViewerSlowIntent(this.direction);
+  final MoveDirection direction;
+}
+class PanViewerSlowAction extends Action<PanViewerSlowIntent> {
+  PanViewerSlowAction(
+    this.upCallback,
+    this.downCallback,
+    this.leftCallback,
+    this.rightCallback,
+  );
+  final VoidCallback upCallback;
+  final VoidCallback downCallback;
+  final VoidCallback leftCallback;
+  final VoidCallback rightCallback;
+  @override
+  void invoke(covariant PanViewerSlowIntent intent) {
+    switch (intent.direction) {
+      case .up   : return upCallback();
+      case .down : return downCallback();
+      case .left : return leftCallback();
+      case .right: return rightCallback();
+    }
+  }
+}
+
 /// 화면 집중 용도
 /// InteractiveViewer가 있는 영역만을 표시
 class FocusViewerIntent extends Intent {const FocusViewerIntent();}
@@ -365,34 +420,44 @@ class ViewPageShortcutWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        /// 이전 파일: `방향키 오른쪽`
-        SingleActivator(LogicalKeyboardKey.arrowLeft): MoveToPreviousFileIntent(),
-        /// 다음 파일: `방향키 왼쪽`
-        SingleActivator(LogicalKeyboardKey.arrowRight): MoveToNextFileIntent(),
+        /// 이전 파일: `Ctrl + 방향키 오른쪽`
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): MoveToPreviousFileIntent(),
+        /// 다음 파일: `Ctrl + 방향키 왼쪽`
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true): MoveToNextFileIntent(),
         /// 새 파일 열기: `Ctrl + O`
-        SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenNewFileIntent(),
+        SingleActivator(LogicalKeyboardKey.keyO, control: true, includeRepeats: false): OpenNewFileIntent(),
         /// 새 폴더 열기: `Ctrl + O`
-        SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true): OpenNewDirectoryIntent(),
+        SingleActivator(LogicalKeyboardKey.keyO, control: true, shift: true, includeRepeats: false): OpenNewDirectoryIntent(),
         /// 파일탐색기로 열기: `Shift + Alt + R`
-        SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true): OpenFileByExplorerIntent(),
+        SingleActivator(LogicalKeyboardKey.keyR, alt: true, shift: true, includeRepeats: false): OpenFileByExplorerIntent(),
         /// 그림판으로 열기: `Ctrl + Shift + P`
-        SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true): OpenFileByMSPaintIntent(),
+        SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true, includeRepeats: false): OpenFileByMSPaintIntent(),
         /// 다른 이름으로 저장: `Ctrl + S`
-        SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveAsFileIntent(),
+        SingleActivator(LogicalKeyboardKey.keyS, control: true, includeRepeats: false): SaveAsFileIntent(),
         /// 현재 파일 삭제: `Shift + DEL`
-        SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteFileIntent(),
+        SingleActivator(LogicalKeyboardKey.delete, shift: true, includeRepeats: false): DeleteFileIntent(),
         /// 현재 파일을 목록에서 제거: `DEL`
-        SingleActivator(LogicalKeyboardKey.delete): RemoveFileInListIntent(),
+        SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false): RemoveFileInListIntent(),
         /// 화면 초기화: `SPACE`
-        SingleActivator(LogicalKeyboardKey.space): ResetViewerIntent(),
+        SingleActivator(LogicalKeyboardKey.space, includeRepeats: false): ResetViewerIntent(),
         /// 화면 확대: `+` 또는 확대키
         CharacterActivator('+'): ZoomInViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomIn): ZoomInViewerIntent(),
-        /// 화면 확대: `-` 또는 축소키
+        /// 화면 축소: `-` 또는 축소키
         CharacterActivator('-'): ZoomOutViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomOut): ZoomOutViewerIntent(),
+        /// 화면 이동: 방향키
+        SingleActivator(LogicalKeyboardKey.arrowUp): PanViewerIntent(.up),
+        SingleActivator(LogicalKeyboardKey.arrowDown): PanViewerIntent(.down),
+        SingleActivator(LogicalKeyboardKey.arrowLeft): PanViewerIntent(.left),
+        SingleActivator(LogicalKeyboardKey.arrowRight): PanViewerIntent(.right),
+        /// 화면 세밀 이동: Shift + 방향키
+        SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): PanViewerSlowIntent(.up),
+        SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): PanViewerSlowIntent(.down),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): PanViewerSlowIntent(.left),
+        SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): PanViewerSlowIntent(.right),
         /// 화면 집중 모드: `T`
-        SingleActivator(LogicalKeyboardKey.keyT): FocusViewerIntent(),
+        SingleActivator(LogicalKeyboardKey.keyT, includeRepeats: false): FocusViewerIntent(),
       },
       child: child,
     );

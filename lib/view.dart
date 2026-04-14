@@ -7,6 +7,8 @@ import 'package:image_viewer/shortcut.dart';
 import 'package:image_viewer/snackbar.dart';
 import 'package:image_viewer/viewer_action_overlay.dart';
 
+enum MoveDirection {up, down, left, right}
+
 class ViewPage extends StatefulWidget {
   final String? filePath;
   const ViewPage({super.key, this.filePath});
@@ -99,6 +101,26 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
+  /// pan 기능
+  void _moveByScale(MoveDirection d, [double s = 10.0]) {
+    final m = _transformController.value.clone();
+    switch (d) {
+      case .up   : m.translateByDouble(0.0,   s, 0.0, 1.0); break;
+      case .down : m.translateByDouble(0.0,  -s, 0.0, 1.0); break;
+      case .left : m.translateByDouble(  s, 0.0, 0.0, 1.0); break;
+      case .right: m.translateByDouble( -s, 0.0, 0.0, 1.0); break;
+    }
+    _transformController.value = m;
+  }
+  void _moveUp()    {_moveByScale(.up);}
+  void _moveDown()  {_moveByScale(.down);}
+  void _moveLeft()  {_moveByScale(.left);}
+  void _moveRight() {_moveByScale(.right);}
+  void _moveUpSlow()    {_moveByScale(.up, 1);}
+  void _moveDownSlow()  {_moveByScale(.down, 1);}
+  void _moveLeftSlow()  {_moveByScale(.left, 1);}
+  void _moveRightSlow() {_moveByScale(.right, 1);}
+
   /// 화면 집중 모드 토글 기능
   void _toggleFocusMode() {
     _isFocusMode.value = !_isFocusMode.value;
@@ -149,6 +171,8 @@ class _ViewPageState extends State<ViewPage> {
           ResetViewerIntent: ResetViewerAction(_zoomReset),
           ZoomInViewerIntent: ZoomInViewerAction(_zoomIn),
           ZoomOutViewerIntent: ZoomOutViewerAction(_zoomOut),
+          PanViewerIntent: PanViewerAction(_moveUp, _moveDown, _moveLeft, _moveRight),
+          PanViewerSlowIntent: PanViewerSlowAction(_moveUpSlow, _moveDownSlow, _moveLeftSlow, _moveRightSlow),
           FocusViewerIntent: FocusViewerAction(_toggleFocusMode),
         },
         child: Focus(
