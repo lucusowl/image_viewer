@@ -16,7 +16,7 @@ class WindowController {
   /// Windows 창의 Fullscreen을 강제 해제
   static void unsetFullscreen() {
     platform.invokeMethod('unsetFullScreen').catchError((e, s) {
-      GlobalSnackbar.showError("전체화면 토글 실패");
+      GlobalSnackbar.showError("전체화면 해제 실패");
     });
   }
 }
