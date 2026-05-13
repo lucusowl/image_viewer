@@ -17,13 +17,13 @@ Windows 용으로 제작되었으며 앱은 flutter를 기반으로 제작.
 -|-|-|-
 화면초기화|버튼|`SPACE`|
 zoom toggle|화면더블클릭|-|
-zoom in|버튼 & 스크롤|`+`|trackpad가능
-zoom out|버튼 & 스크롤|`-`|trackpad가능
-pan|드래그|`Arrow-Key`(기본),<br>`Shift + Arrow-Key`(미세)|trackpad가능
-집중 모드|화면클릭|`T`|
+zoom in|버튼 & 스크롤|`+`|trackpad가능, 1.25배
+zoom out|버튼 & 스크롤|`-`|trackpad가능, 0.8배
+pan|드래그|(기본)`Ctrl + Arrow-Key`,<br>(미세)`Ctrl + Shift + Arrow-Key`|trackpad가능
+집중 모드|화면더블클릭|`T`|
 전체화면 모드|버튼|`F`, `F11`|
-이전 파일|버튼|`Ctrl + Arrow-Left`|
-이후 파일|버튼|`Ctrl + Arrow-Right`|
+이전 파일|버튼|`Arrow-Left`|
+이후 파일|버튼|`Arrow-Right`|
 새파일 열기|버튼|`Ctrl + O`|
 새폴더 열기|버튼|`Ctrl + Shift + O`|
 파일탐색기 열기|버튼|`Shift + Alt + R`|
@@ -31,6 +31,7 @@ pan|드래그|`Arrow-Key`(기본),<br>`Shift + Arrow-Key`(미세)|trackpad가능
 다른이름으로 저장|버튼|`Ctrl + S`|캐시값 저장
 삭제|버튼|`Shift + DEL`|파일 영구삭제
 목록에서 제거|버튼|`DEL`|
+앱 종료|-|`Q`
 
 zoom 배율은 50% ~ 1000% 범위를 가짐.
 
