@@ -15,21 +15,11 @@ class GlobalSnackbar {
     if (!wait) snackBarKey.currentState?.removeCurrentSnackBar();
     snackBarKey.currentState?.showSnackBar(
       SnackBar(
-        behavior: .floating,
         duration: const Duration(seconds: 3),
-        showCloseIcon: true,
-        closeIconColor: Colors.white,
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer.withAlpha(138), // 54%
         shape: RoundedRectangleBorder(
           borderRadius: .circular(16.0),
           side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),),
-        width: 200.0,
-        // margin: .only(bottom: 72.0),
-        padding: .fromLTRB(14, 0, 0, 0),
-        content: Text(
-          message,
-          style: TextStyle(color: Colors.white),),),
+        content: Text(message),),
     );
   }
 
@@ -45,21 +35,13 @@ class GlobalSnackbar {
     if (!wait) snackBarKey.currentState?.removeCurrentSnackBar();
     snackBarKey.currentState?.showSnackBar(
       SnackBar(
-        behavior: .floating,
         duration: const Duration(seconds: 6),
-        showCloseIcon: true,
         closeIconColor: Colors.red,
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer.withAlpha(138), // 54%
         shape: RoundedRectangleBorder(
           borderRadius: .circular(16.0),
           side: BorderSide(color: Colors.red.shade400),),
-        width: 200.0,
-        // margin: .only(bottom: 72.0),
-        padding: .fromLTRB(14, 0, 0, 0),
-        content: Text(
-          message,
-          style: TextStyle(color: Colors.white),),),
+        content: Text(message),
+      )
     );
   }
 }
