@@ -92,12 +92,16 @@ class _ViewPageState extends State<ViewPage> {
   }
 
   /// 화면 더블 클릭시 화면 2배 확대 | 취소
+  /// + 확대시 집중모드 활성
+  /// + 취소시 집중모드 비활성
   void _onMouseDoubleUp() {
     final double currentScale = _transformController.value.getMaxScaleOnAxis();
     if (currentScale == 1) {
       _zoomIn(2.0);
+      _isFocusMode.value = true;
     } else {
       _zoomReset();
+      _isFocusMode.value = false;
     }
   }
 
@@ -208,7 +212,6 @@ class _ViewPageState extends State<ViewPage> {
             child: RepaintBoundary(
               child: GestureDetector(
                 onDoubleTap: _onMouseDoubleUp,
-                onTap: _toggleFocusMode,
                 child: LayoutBuilder(
                   builder: (_, BoxConstraints constraints) => InteractiveViewer(
                     key: _viewerKey,

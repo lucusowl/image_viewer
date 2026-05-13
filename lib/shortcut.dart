@@ -385,6 +385,14 @@ class UnsetFullScreenAction extends Action<UnsetFullScreenIntent> {
   void invoke(covariant UnsetFullScreenIntent intent) => WindowController.unsetFullscreen();
 }
 
+/// 앱 종료 용도
+class ExitApplicationIntent extends Intent {const ExitApplicationIntent();}
+class ExitApplicationAction extends Action<ExitApplicationIntent> {
+  ExitApplicationAction();
+  @override
+  void invoke(covariant ExitApplicationIntent intent) => ServicesBinding.instance.exitApplication(.required);
+}
+
 /// 전역에서 사용할 단축키를 등록하는 위젯
 class GlobalShortcutWrapper extends StatelessWidget {
   final Widget child;
@@ -399,11 +407,14 @@ class GlobalShortcutWrapper extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.keyF): ToggleFullScreenIntent(),
         /// 전체화면 모드 해제: `ESC`
         SingleActivator(LogicalKeyboardKey.escape): UnsetFullScreenIntent(),
+        /// 앱 종료: `q`
+        SingleActivator(LogicalKeyboardKey.keyQ, includeRepeats: false): ExitApplicationIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
           ToggleFullScreenIntent: ToggleFullScreenAction(),
           UnsetFullScreenIntent: UnsetFullScreenAction(),
+          ExitApplicationIntent: ExitApplicationAction(),
         },
         child: child
       ),
@@ -420,10 +431,10 @@ class ViewPageShortcutWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        /// 이전 파일: `Ctrl + 방향키 오른쪽`
-        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): MoveToPreviousFileIntent(),
-        /// 다음 파일: `Ctrl + 방향키 왼쪽`
-        SingleActivator(LogicalKeyboardKey.arrowRight, control: true): MoveToNextFileIntent(),
+        /// 이전 파일: `방향키 오른쪽`
+        SingleActivator(LogicalKeyboardKey.arrowLeft): MoveToPreviousFileIntent(),
+        /// 다음 파일: `방향키 왼쪽`
+        SingleActivator(LogicalKeyboardKey.arrowRight): MoveToNextFileIntent(),
         /// 새 파일 열기: `Ctrl + O`
         SingleActivator(LogicalKeyboardKey.keyO, control: true, includeRepeats: false): OpenNewFileIntent(),
         /// 새 폴더 열기: `Ctrl + O`
@@ -446,16 +457,16 @@ class ViewPageShortcutWrapper extends StatelessWidget {
         /// 화면 축소: `-` 또는 축소키
         CharacterActivator('-'): ZoomOutViewerIntent(),
         SingleActivator(LogicalKeyboardKey.zoomOut): ZoomOutViewerIntent(),
-        /// 화면 이동: 방향키
-        SingleActivator(LogicalKeyboardKey.arrowUp): PanViewerIntent(.up),
-        SingleActivator(LogicalKeyboardKey.arrowDown): PanViewerIntent(.down),
-        SingleActivator(LogicalKeyboardKey.arrowLeft): PanViewerIntent(.left),
-        SingleActivator(LogicalKeyboardKey.arrowRight): PanViewerIntent(.right),
-        /// 화면 세밀 이동: Shift + 방향키
-        SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): PanViewerSlowIntent(.up),
-        SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): PanViewerSlowIntent(.down),
-        SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): PanViewerSlowIntent(.left),
-        SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): PanViewerSlowIntent(.right),
+        /// 화면 이동: Ctrl + 방향키
+        SingleActivator(LogicalKeyboardKey.arrowUp, control: true): PanViewerIntent(.up),
+        SingleActivator(LogicalKeyboardKey.arrowDown, control: true): PanViewerIntent(.down),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): PanViewerIntent(.left),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true): PanViewerIntent(.right),
+        /// 화면 세밀 이동: Ctrl + Shift + 방향키
+        SingleActivator(LogicalKeyboardKey.arrowUp, control: true, shift: true): PanViewerSlowIntent(.up),
+        SingleActivator(LogicalKeyboardKey.arrowDown, control: true, shift: true): PanViewerSlowIntent(.down),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): PanViewerSlowIntent(.left),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): PanViewerSlowIntent(.right),
         /// 화면 집중 모드: `T`
         SingleActivator(LogicalKeyboardKey.keyT, includeRepeats: false): FocusViewerIntent(),
       },
