@@ -19,4 +19,11 @@ class WindowController {
       GlobalSnackbar.showError("전체화면 해제 실패");
     });
   }
+
+  /// Windows 창 닫기
+  static void closeWindow() {
+    platform.invokeMethod('closeWindow').catchError((e, s) {
+      GlobalSnackbar.showError("창 닫기 실패");
+    });
+  }
 }

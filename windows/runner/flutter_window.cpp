@@ -40,7 +40,10 @@ bool FlutterWindow::OnCreate() {
   channel->SetMethodCallHandler(
       [this](const flutter::MethodCall<>& call,
              std::unique_ptr<flutter::MethodResult<>> result) {
-        if (call.method_name() == "toggleFullScreen") {
+        if (call.method_name() == "closeWindow") {
+          DestroyWindow(GetHandle());
+          result->Success();
+        } else if (call.method_name() == "toggleFullScreen") {
           ToggleFullScreen(GetHandle(), false, false);
           result->Success();
         } else if (call.method_name() == "unsetFullScreen") {

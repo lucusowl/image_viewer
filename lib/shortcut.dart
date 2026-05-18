@@ -390,7 +390,7 @@ class ExitApplicationIntent extends Intent {const ExitApplicationIntent();}
 class ExitApplicationAction extends Action<ExitApplicationIntent> {
   ExitApplicationAction();
   @override
-  void invoke(covariant ExitApplicationIntent intent) => ServicesBinding.instance.exitApplication(.required);
+  void invoke(covariant ExitApplicationIntent intent) => WindowController.closeWindow();
 }
 
 /// 전역에서 사용할 단축키를 등록하는 위젯
